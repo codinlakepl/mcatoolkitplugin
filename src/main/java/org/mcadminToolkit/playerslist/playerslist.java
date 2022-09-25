@@ -9,18 +9,18 @@ import java.util.List;
 
 public class playerslist {
 
-    public static String[] getPlayers (JavaPlugin plugin) {
+    public static playerInfo[] getPlayers (JavaPlugin plugin) {
 
         Server server = plugin.getServer();
 
-        List<String> players = new ArrayList<>();
+        List<playerInfo> players = new ArrayList<>();
 
         Player[] onlinePlayers = server.getOnlinePlayers().toArray(new Player[0]);
 
         for (Player onlinePlayer : onlinePlayers) {
-            players.add(onlinePlayer.getName());
+            players.add(new playerInfo(onlinePlayer.getName(), onlinePlayer.getUniqueId()));
         }
 
-        return players.toArray(new String[0]);
+        return players.toArray(new playerInfo[0]);
     }
 }

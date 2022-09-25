@@ -9,28 +9,28 @@ import java.util.List;
 
 public class offlineplayerslist {
 
-    public static String[] getOfflinePlayers (JavaPlugin plugin) {
+    public static playerInfo[] getOfflinePlayers (JavaPlugin plugin) {
 
-        List<String> offlinePlayers = new ArrayList<>();
+        List<playerInfo> offlinePlayers = new ArrayList<>();
 
         Server server = plugin.getServer();
 
         OfflinePlayer[] allPlayers = server.getOfflinePlayers();
 
-        String[] onlinePlayers = playerslist.getPlayers(plugin);
+        playerInfo[] onlinePlayers = playerslist.getPlayers(plugin);
 
         for (OfflinePlayer player : allPlayers) {
             boolean exists = false;
-            for (String onlinePlayer : onlinePlayers) {
-                if (onlinePlayer == player.getName()) {
+            for (playerInfo onlinePlayer : onlinePlayers) {
+                if (onlinePlayer.name == player.getName()) {
                     exists = true;
                     break;
                 }
             }
 
-            if (!exists) offlinePlayers.add (player.getName());
+            if (!exists) offlinePlayers.add (new playerInfo(player.getName(), player.getUniqueId()));
         }
 
-        return offlinePlayers.toArray(new String[0]);
+        return offlinePlayers.toArray(new playerInfo[0]);
     }
 }
