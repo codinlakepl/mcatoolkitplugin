@@ -36,6 +36,20 @@ public class serverStats {
         return cpuUsage;
     }
 
+    public static String ramUsage (JavaPlugin plugin) {
+        Server server = plugin.getServer();
+        OperatingSystemMXBean system = (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+
+        long totalMemoryB = system.getTotalPhysicalMemorySize();
+        String totalMemory = convert(totalMemoryB);
+
+        long freeMemoryB = system.getFreePhysicalMemorySize();
+        long usedMemoryB = totalMemoryB = freeMemoryB;
+        String usedMemory = convert(usedMemoryB);
+
+        return usedMemory + "/" + totalMemory;
+    }
+
     public static String playersOnline (JavaPlugin plugin){
         Server server = plugin.getServer();
 
