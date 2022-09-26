@@ -44,7 +44,7 @@ public class serverStats {
         String totalMemory = convert(totalMemoryB);
 
         long freeMemoryB = system.getFreePhysicalMemorySize();
-        long usedMemoryB = totalMemoryB = freeMemoryB;
+        long usedMemoryB = totalMemoryB - freeMemoryB;
         String usedMemory = convert(usedMemoryB);
 
         return usedMemory + "/" + totalMemory;
