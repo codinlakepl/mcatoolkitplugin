@@ -1,0 +1,14 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="bukkit-backend:jar">
+    <output-path>$USER_HOME$/Desktop/pluginJAR</output-path>
+    <root id="archive" name="bukkit-backend.jar">
+      <element id="directory" name="META-INF">
+        <element id="file-copy" path="$USER_HOME$/Desktop/pluginJAR/META-INF/MANIFEST.MF" />
+      </element>
+      <element id="module-output" name="bukkit-backend" />
+      <element id="file-copy" path="$PROJECT_DIR$/src/main/resources/plugin.yml" />
+      <element id="library" level="project" name="Maven: org.spigotmc:spigot-api:1.16.4-R0.1-SNAPSHOT" />
+      <element id="module-source" name="bukkit-backend" />
+    </root>
+  </artifact>
+</component>

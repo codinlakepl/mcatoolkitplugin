@@ -29,10 +29,25 @@
             <type>jar</type>
             <scope>provided</scope>
         </dependency>
-        <dependency>
+        <!--<dependency>
             <groupId>org.python</groupId>
             <artifactId>jython-installer</artifactId>
             <version>2.7.2</version>
+        </dependency>-->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.3</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.hakky54</groupId>
+            <artifactId>sslcontext-kickstart-for-pem</artifactId>
+            <version>7.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.Simonwep</groupId>
+            <artifactId>java-express</artifactId>
+            <version>0.0.10</version>
         </dependency>
     </dependencies>
 

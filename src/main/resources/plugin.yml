@@ -1,3 +1,11 @@
 name: MCAdmin-Toolkit-Connector
 main: org.mcadminToolkit.mcadminToolkit
 version: 0.1
+
+commands:
+  test:
+    description: testowa komenda
+    usage: /<command>
+  whitelistGet:
+    description: Zwraca stringa z whitelista
+    usage: /<command>
