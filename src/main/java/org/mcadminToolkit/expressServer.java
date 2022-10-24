@@ -12,8 +12,7 @@ import express.http.response.Response;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.X509ExtendedKeyManager;
 import javax.net.ssl.X509ExtendedTrustManager;
-import java.io.File;
-import java.nio.file.Path;
+import java.io.InputStream;
 
 public class expressServer {
 
@@ -22,17 +21,31 @@ public class expressServer {
         //Path cert = new File("cert.pem").toPath();
         //Path key = new File("key.pem").toPath();
 
-        //X509ExtendedKeyManager keyManager = PemUtils.loadIdentityMaterial(cert, key, "123123".toCharArray());
-        //X509ExtendedTrustManager trustManager = PemUtils.loadTrustMaterial(cert);
+        ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+        InputStream cert = classloader.getResourceAsStream("rootCA.crt");
+        InputStream key = classloader.getResourceAsStream("rootCA.key");
 
-        //SSLFactory sslFactory = SSLFactory.builder()
-        //        .withIdentityMaterial(keyManager)
-        //        .withTrustMaterial(trustManager)
-        //        .build();
 
-        //SSLContext sslContext = sslFactory.getSslContext();
+        X509ExtendedKeyManager keyManager = PemUtils.loadIdentityMaterial(cert, key);
 
-        Express app = new Express();
+        try {
+            cert.close();
+            cert = classloader.getResourceAsStream("rootCA.crt");
+        } catch (Exception e) {
+            System.out.println("Can't close previous stream");
+            System.exit(1);
+        }
+
+        X509ExtendedTrustManager trustManager = PemUtils.loadTrustMaterial(cert);
+
+        SSLFactory sslFactory = SSLFactory.builder()
+                .withIdentityMaterial(keyManager)
+                .withTrustMaterial(trustManager)
+                .build();
+
+        SSLContext sslContext = sslFactory.getSslContext();
+
+        Express app = new Express(new HttpsConfigurator(sslContext));
         app.bind(new Bindings());
         app.listen(2137);
     }
@@ -62,25 +75,25 @@ class Bindings {
                 "Returns banned players object");
     }
 
-    @DynExpress(context = "/BAN") // Both defined
+    @DynExpress(context = "/BAN", method = RequestMethod.POST) // Both defined
     public void getBAN(Request req, Response res) {
         res.send("Accepts: BAN <username> \n" +
                 "Bans specific player");
     }
 
-    @DynExpress(context = "/BANIP") // Both defined
+    @DynExpress(context = "/BANIP", method = RequestMethod.POST) // Both defined
     public void getBANIP(Request req, Response res) {
         res.send("Accepts: BANIP <ip> \n" +
                 "Bans specific ip");
     }
 
-    @DynExpress(context = "/KICK") // Both defined
+    @DynExpress(context = "/KICK", method = RequestMethod.POST) // Both defined
     public void getKICK(Request req, Response res) {
         res.send("Accepts: KICK <username> \n" +
                 "Kicks specific player from server");
     }
 
-    @DynExpress(context = "/WHITEADD") // Both defined
+    @DynExpress(context = "/WHITEADD", method = RequestMethod.POST) // Both defined
     public void getWHITEADD(Request req, Response res) {
         res.send("Accepts: WHITEADD <username> \n" +
                 "Adds specific player to whitelist");
