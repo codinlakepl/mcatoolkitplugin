@@ -13,6 +13,10 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.X509ExtendedKeyManager;
 import javax.net.ssl.X509ExtendedTrustManager;
 import java.io.InputStream;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.security.Security;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -26,22 +30,15 @@ public class expressServer {
         //Path cert = new File("cert.pem").toPath();
         //Path key = new File("key.pem").toPath();
 
-        ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+        /*ClassLoader classloader = Thread.currentThread().getContextClassLoader();
         InputStream cert = classloader.getResourceAsStream("rootCA.crt");
-        InputStream key = classloader.getResourceAsStream("rootCA.key");
+        InputStream key = classloader.getResourceAsStream("rootCA.key");*/
 
 
-        X509ExtendedKeyManager keyManager = PemUtils.loadIdentityMaterial(cert, key);
 
-        try {
-            cert.close();
-            cert = classloader.getResourceAsStream("rootCA.crt");
-        } catch (Exception e) {
-            System.out.println("Can't close previous stream");
-            System.exit(1);
-        }
+        X509ExtendedKeyManager keyManager = PemUtils.loadIdentityMaterial(FileSystems.getDefault().getPath("rootCA.crt"), FileSystems.getDefault().getPath("rootCA.key"));
 
-        X509ExtendedTrustManager trustManager = PemUtils.loadTrustMaterial(cert);
+        X509ExtendedTrustManager trustManager = PemUtils.loadTrustMaterial(FileSystems.getDefault().getPath("rootCA.crt"));
 
         SSLFactory sslFactory = SSLFactory.builder()
                 .withIdentityMaterial(keyManager)
