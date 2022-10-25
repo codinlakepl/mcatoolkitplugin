@@ -19,5 +19,8 @@ public final class mcadminToolkit extends JavaPlugin {
         getLogger().info("MCAdmin Toolkit Connector successfully initialized");
         this.getCommand("test").setExecutor(new testCommand());
         this.getCommand("whitelistGet").setExecutor(new whitelistGetCommand());
+
+        //express init
+        expressServer.initializeServer();
     }
 }

@@ -21,7 +21,7 @@ import org.mcadminToolkit.sqlHandler.sqlConnector;
 import org.mcadminToolkit.sqlHandler.sqlStructureConstructor;
 public class expressServer {
 
-    public static void main(String[] args) {
+    public static void initializeServer() {
 
         //Path cert = new File("cert.pem").toPath();
         //Path key = new File("key.pem").toPath();

@@ -36,7 +36,7 @@ public class session {
         session[] sessions = activeSessions.toArray(new session[0]);
 
         for (int i = 0; i < sessions.length; i++) {
-            if (sessions[i].userName == name) return i;
+            if (sessions[i].userName.equals(name)) return i;
         }
 
         return -1;
