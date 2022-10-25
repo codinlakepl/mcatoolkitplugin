@@ -13,7 +13,12 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.X509ExtendedKeyManager;
 import javax.net.ssl.X509ExtendedTrustManager;
 import java.io.InputStream;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 
+import org.mcadminToolkit.sqlHandler.sqlConnector;
+import org.mcadminToolkit.sqlHandler.sqlStructureConstructor;
 public class expressServer {
 
     public static void main(String[] args) {
@@ -48,6 +53,10 @@ public class expressServer {
         Express app = new Express(new HttpsConfigurator(sslContext));
         app.bind(new Bindings());
         app.listen(2137);
+
+        Connection con = sqlConnector.connect("TEST.db");
+        sqlStructureConstructor.checkStructure(con);
+        System.out.println("All done");
     }
 }
 

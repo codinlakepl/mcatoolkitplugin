@@ -18,7 +18,9 @@ public class sqlConnector {
 
             if (con != null) return con;
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            System.err.println(e.getMessage());
+            System.err.println("SQLITE doesn't work, try manually deleting db file");
+            System.exit(1);
         }
 
         return null;

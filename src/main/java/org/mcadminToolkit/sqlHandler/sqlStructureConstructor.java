@@ -13,16 +13,30 @@ public class sqlStructureConstructor {
             statement = con.createStatement();
             statement.setQueryTimeout(30);
 
-            statement.executeUpdate("CREATE TABLE accounts (id NOT NULL AI INT, name VARCHAR(20), pass TEXT, secLvl INT, PRIMARY KEY(id))");
-            statement.executeUpdate("CREATE TABLE authKeys (id NOT NULL AI INT, authKey TEXT, secLvl INT)");
+            statement.executeUpdate("create table\n" +
+                    "  `accounts` (\n" +
+                    "    `id` integer not null primary key autoincrement,\n" +
+                    "    `name` varchar(20) null,\n" +
+                    "    `pass` TEXT null,\n" +
+                    "    `secLvl` INT null,\n" +
+                    "    `created_at` datetime not null default CURRENT_TIMESTAMP\n" +
+                    "  )");
+            statement.executeUpdate("create table\n" +
+                    "  `authkeys` (\n" +
+                    "    `id` integer not null primary key autoincrement,\n" +
+                    "    `authKey` TEXT null,\n" +
+                    "    `secLvl` INT null,\n" +
+                    "    `created_at` datetime not null default CURRENT_TIMESTAMP\n" +
+                    "  )");
         } catch (SQLException e) {
             System.err.println(e.getMessage());
+            System.err.println("SQLITE doesn't work, try manually deleting db file");
+            System.exit(1);
         }
     }
 
     public static void checkStructure (Connection con) {
         Statement statement;
-
         try {
             statement = con.createStatement();
             statement.setQueryTimeout(30);
