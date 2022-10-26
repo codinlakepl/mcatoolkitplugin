@@ -13,6 +13,14 @@ public class ban {
         Server server = plugin.getServer();
 
         server.getBanList(BanList.Type.NAME).addBan(playerName, reason, expires, "console");
+        Player[] players = server.getOnlinePlayers().toArray(new Player[0]);
+
+        for (Player player : players) {
+            if (player.getName().equals(playerName)) {
+                kick.kick(plugin, player.getUniqueId().toString(), reason + "\nautokick after ban");
+                break;
+            }
+        }
     }
 
     public static void banIp (JavaPlugin plugin, UUID playerUUID) {
@@ -23,6 +31,7 @@ public class ban {
         for (Player player : players) {
             if (player.getUniqueId().equals(playerUUID)) {
                 server.banIP(player.getAddress().toString());
+                kick.kick(plugin, player.getUniqueId().toString(), "\nautokick after ban");
                 break;
             }
         }

@@ -21,6 +21,7 @@ public final class mcadminToolkit extends JavaPlugin {
         this.getCommand("whitelistGet").setExecutor(new whitelistGetCommand());
 
         //express init
-        expressServer.initializeServer();
+        JavaPlugin plugin = mcadminToolkit.getPlugin(mcadminToolkit.class);
+        expressServer.initializeServer(plugin);
     }
 }
