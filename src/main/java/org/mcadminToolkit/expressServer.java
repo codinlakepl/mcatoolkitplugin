@@ -1,5 +1,6 @@
 package org.mcadminToolkit;
 
+import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpsConfigurator;
 import nl.altindag.ssl.SSLFactory;
 import nl.altindag.ssl.util.IOUtils;
@@ -26,7 +27,10 @@ import java.time.Instant;
 import java.util.*;
 
 import org.bukkit.plugin.java.JavaPlugin;
+import org.json.JSONObject;
 import org.mcadminToolkit.auth.CreateSessionException;
+import org.mcadminToolkit.auth.NoSessionException;
+import org.mcadminToolkit.auth.SessionExpirationException;
 import org.mcadminToolkit.auth.session;
 import org.mcadminToolkit.banlist.banlist;
 import org.mcadminToolkit.playermanagement.kick;
@@ -79,18 +83,44 @@ public class expressServer {
 
 class Bindings {
 
+    boolean checkSession (String sessionKey) {
+        try {
+            session.isSessionActive(session.getSessionIndex(sessionKey));
+        } catch (NoSessionException | SessionExpirationException e) {
+            return false;
+        }
+
+        return true;
+    }
+
     @DynExpress() // Default is context="/" and method=RequestMethod.GET
     public void getHuj(Request req, Response res) {
         res.send("MCAdmin Toolkit API v0.1");
     }
 
-    @DynExpress(context = "/WHITELIST") // Both defined
+    @DynExpress(context = "/WHITELIST", method = RequestMethod.POST) // Both defined
     public void getWHITELIST(Request req, Response res) {
+        Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
+        String body = inputBody.hasNext() ? inputBody.next() : "";
+
+        if (!checkSession(body)) {
+            res.send("login");
+            return;
+        }
+
         res.send(Arrays.toString(whitelist.getWhiteList(expressServer.pluginGlobal)));
     }
 
-    @DynExpress(context = "/PLAYERS") // Both defined
+    @DynExpress(context = "/PLAYERS", method = RequestMethod.POST) // Both defined
     public void getPLAYERS(Request req, Response res) {
+        Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
+        String body = inputBody.hasNext() ? inputBody.next() : "";
+
+        if (!checkSession(body)) {
+            res.send("login");
+            return;
+        }
+
         List<String> players = new ArrayList<String> ();
 
         List<playerInfo> infos = new ArrayList<playerInfo>();
@@ -107,8 +137,16 @@ class Bindings {
         res.send(Arrays.toString(playerNicknames.toArray()));
     }
 
-    @DynExpress(context = "/BANLIST") // Both defined
+    @DynExpress(context = "/BANLIST", method = RequestMethod.POST) // Both defined
     public void getBANLIST(Request req, Response res) {
+        Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
+        String body = inputBody.hasNext() ? inputBody.next() : "";
+
+        if (!checkSession(body)) {
+            res.send("login");
+            return;
+        }
+
         List<String> bans = new ArrayList<String>();
         bans.addAll(Arrays.asList(banlist.playerBanList(expressServer.pluginGlobal)));
         bans.addAll(Arrays.asList(banlist.ipBanList(expressServer.pluginGlobal)));
@@ -124,8 +162,20 @@ class Bindings {
         Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
         String body = inputBody.hasNext() ? inputBody.next() : "";
 
+        JSONObject json = new JSONObject(body); // {"username": "IpyZ", "reason": "test123", "hours": 2 "sessionKey": "test"}
+
+        String username = json.getString("username");
+        String sessionKey = json.getString("sessionKey");
+        String reason = json.getString("reason");
+        int hours = json.getInt("hours");
+
+        if (!checkSession(sessionKey)) {
+            res.send("login");
+            return;
+        }
+
         try {
-            ban.ban(expressServer.pluginGlobal, body, "test123", Date.from(new Date().toInstant().plus(Duration.ofHours(2))));
+            ban.ban(expressServer.pluginGlobal, username, reason, Date.from(new Date().toInstant().plus(Duration.ofHours(hours))));
 
             res.send("Done");
         } catch (Exception e) {
@@ -141,8 +191,19 @@ class Bindings {
         Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
         String body = inputBody.hasNext() ? inputBody.next() : "";
 
+        JSONObject json = new JSONObject(body); // {"ip": "127.0.0.1", "sessionKey": "test"}
+
+        String ip = json.getString("ip");
+        String sessionKey = json.getString("sessionKey");
+
+        if (!checkSession(sessionKey)) {
+            res.send("login");
+            return;
+        }
+
+
         try {
-            ban.banIp(expressServer.pluginGlobal, UUID.fromString(body));
+            ban.banIp(expressServer.pluginGlobal, UUID.fromString(ip));
 
             res.send("Done");
         } catch (Exception e) {
@@ -158,8 +219,18 @@ class Bindings {
         Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
         String body = inputBody.hasNext() ? inputBody.next() : "";
 
+        JSONObject json = new JSONObject(body); // {"username": "IpyZ", "sessionKey": "test"}
+
+        String username = json.getString("username");
+        String sessionKey = json.getString("sessionKey");
+
+        if (!checkSession(sessionKey)) {
+            res.send("login");
+            return;
+        }
+
         try {
-            ban.unban(expressServer.pluginGlobal, body);
+            ban.unban(expressServer.pluginGlobal, username);
 
             res.send("Done");
         } catch (Exception e) {
@@ -173,10 +244,22 @@ class Bindings {
                 "Kicks specific player from server");*/
         Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
         String body = inputBody.hasNext() ? inputBody.next() : "";
+
+        JSONObject json = new JSONObject(body); // {"username": "IpyZ", "reason": "test123", "sessionKey": "test"}
+
+        String username = json.getString("username");
+        String sessionKey = json.getString("sessionKey");
+        String reason = json.getString("reason");
+
+        if (!checkSession(sessionKey)) {
+            res.send("login");
+            return;
+        }
+
         try{
             //ban.ban(expressServer.pluginGlobal, body, "TEST", Date.from(Instant.now()));
-            kick.kick(expressServer.pluginGlobal, body, "abc");
-            res.send(body + " Succes!");
+            kick.kick(expressServer.pluginGlobal, username, reason);
+            res.send(username + " Succes!");
         }catch (Exception e){
             res.send(e.toString());
         }
@@ -190,8 +273,18 @@ class Bindings {
         Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
         String body = inputBody.hasNext() ? inputBody.next() : "";
 
+        JSONObject json = new JSONObject(body); // {"username": "IpyZ", "sessionKey": "test"}
+
+        String username = json.getString("username");
+        String sessionKey = json.getString("sessionKey");
+
+        if (!checkSession(sessionKey)) {
+            res.send("login");
+            return;
+        }
+
         try {
-            whitelist.addWhitelistPlayer(expressServer.pluginGlobal, body);
+            whitelist.addWhitelistPlayer(expressServer.pluginGlobal, username);
 
             res.send("Done");
         } catch (Exception e) {
@@ -199,9 +292,17 @@ class Bindings {
         }
     }
 
-    @DynExpress(context = "/STATS") // Both defined
+    @DynExpress(context = "/STATS", method = RequestMethod.POST) // Both defined
     public void getSTATS(Request req, Response res) {
         //res.send("Returns server stats (CPU, RAM usage ect.)");
+
+        Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
+        String body = inputBody.hasNext() ? inputBody.next() : "";
+
+        if (!checkSession(body)) {
+            res.send("login");
+            return;
+        }
 
         res.send(serverStats.cpuUsage(expressServer.pluginGlobal) + serverStats.playersOnline(expressServer.pluginGlobal) + serverStats.ramUsage(expressServer.pluginGlobal));
     }
@@ -211,8 +312,8 @@ class Bindings {
         res.send("Returns info that server is working or not");
     }
 
-    @DynExpress(context = "/REGISTER", method = RequestMethod.POST)
-    public void getREGISTER (Request req, Response res) {
+    @DynExpress(context = "/LOGIN", method = RequestMethod.POST)
+    public void getLOGIN (Request req, Response res) {
         Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
         String body = inputBody.hasNext() ? inputBody.next() : "";
 

@@ -30,15 +30,15 @@ public class session {
         }
     }
 
-    public static void validateSession (int sessionIndex, String sessionKey) throws InvalidSessionException {
+    /*public static void validateSession (int sessionIndex, String sessionKey) throws InvalidSessionException {
         if (!BCrypt.checkpw(sessionKey, activeSessions.get(sessionIndex).sessionKey)) throw new InvalidSessionException();
-    }
+    }*/
 
-    public static int getSessionIndex (String authKey) throws NoSessionException {
+    public static int getSessionIndex (String sessionKey) throws NoSessionException {
         session[] sessions = activeSessions.toArray(new session[0]);
 
         for (int i = 0; i < sessions.length; i++) {
-            if (sessions[i].authKey.equals(authKey)) return i;
+            if (BCrypt.checkpw(sessionKey, sessions[i].sessionKey)) return i;
         }
 
         throw new NoSessionException();

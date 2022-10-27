@@ -1,5 +1,7 @@
 package org.mcadminToolkit.sqlHandler;
 
+import org.springframework.security.crypto.bcrypt.BCrypt;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -16,7 +18,7 @@ public class authKeyRegistration {
             statement = con.createStatement();
             statement.setQueryTimeout(30);
 
-            statement.executeUpdate("INSERT INTO authkeys(authKey, secLvl) VALUES (\"" + uuid + "\", " + secLvl + ")");
+            statement.executeUpdate("INSERT INTO authkeys(authKey, secLvl) VALUES (\"" + BCrypt.hashpw(uuid, BCrypt.gensalt()) + "\", " + secLvl + ")");
         } catch (SQLException e) {
             throw new AuthKeyRegistrationException();
         }

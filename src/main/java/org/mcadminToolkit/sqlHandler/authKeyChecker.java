@@ -1,5 +1,7 @@
 package org.mcadminToolkit.sqlHandler;
 
+import org.springframework.security.crypto.bcrypt.BCrypt;
+
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -13,13 +15,18 @@ public class authKeyChecker {
         try {
             statement = con.createStatement();
             statement.setQueryTimeout(30);
-            ResultSet results = statement.executeQuery("SELECT * FROM authkeys WHERE authKey=\"" + uuid + "\"");
+            ResultSet results = statement.executeQuery("SELECT * FROM authkeys");
+            do {
+                if (BCrypt.checkpw(uuid, results.getString("authKey"))) {
+                    return true;
+                }
+            } while (results.next());
 
             if (results.getFetchSize() < 1) return false;
         } catch (SQLException e) {
             return false;
         }
 
-        return false;
+        return true;
     }
 }
