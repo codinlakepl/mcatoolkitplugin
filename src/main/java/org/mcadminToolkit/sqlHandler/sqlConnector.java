@@ -6,6 +6,8 @@ import java.sql.SQLException;
 
 public class sqlConnector {
 
+    public static Connection connection;
+
     static String staticPath = "./";
 
     public static Connection connect (String filename) {
@@ -16,7 +18,10 @@ public class sqlConnector {
         try {
             con = DriverManager.getConnection(url);
 
-            if (con != null) return con;
+            if (con != null) {
+                connection = con;
+                return con;
+            }
         } catch (SQLException e) {
             System.err.println(e.getMessage());
             System.err.println("SQLITE doesn't work, try manually deleting db file");

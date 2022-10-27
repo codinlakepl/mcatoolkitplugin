@@ -26,6 +26,8 @@ import java.time.Instant;
 import java.util.*;
 
 import org.bukkit.plugin.java.JavaPlugin;
+import org.mcadminToolkit.auth.CreateSessionException;
+import org.mcadminToolkit.auth.session;
 import org.mcadminToolkit.banlist.banlist;
 import org.mcadminToolkit.playermanagement.kick;
 import org.mcadminToolkit.playerslist.offlineplayerslist;
@@ -207,6 +209,20 @@ class Bindings {
     @DynExpress(context = "/ISWORKING") // Both defined
     public void getISWORKING(Request req, Response res) {
         res.send("Returns info that server is working or not");
+    }
+
+    @DynExpress(context = "/REGISTER", method = RequestMethod.POST)
+    public void getREGISTER (Request req, Response res) {
+        Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
+        String body = inputBody.hasNext() ? inputBody.next() : "";
+
+        try {
+            String generatedSessionKey = session.createSession(body);
+
+            res.send(generatedSessionKey);
+        } catch (CreateSessionException e) {
+            res.send("error");
+        }
     }
 
     @DynExpress(method = RequestMethod.POST) // Only the method is defined, "/" is used as context

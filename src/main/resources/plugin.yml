@@ -9,3 +9,6 @@ commands:
   whitelistGet:
     description: Zwraca stringa z whitelista
     usage: /<command>
+  createAuthKey:
+    description: Tworzy auth key
+    usage: /<command>
