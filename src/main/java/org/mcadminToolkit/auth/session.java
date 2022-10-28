@@ -45,7 +45,7 @@ public class session {
     }
 
     public static String createSession (String authKey) throws CreateSessionException {
-        if (authKeyChecker.checkAuthKey(sqlConnector.connection, authKey)) {
+        if (authKeyChecker.checkAuthKey(sqlConnector.connection, authKey)/*authKey.equals("DUPA")*/) {
             String sessionKey = UUID.randomUUID().toString();
             session newSession = new session(authKey, sessionKey, Date.from(new Date().toInstant().plus(Duration.ofHours(1))));
             activeSessions.add(newSession);

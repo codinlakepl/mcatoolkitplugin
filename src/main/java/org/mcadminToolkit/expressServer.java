@@ -44,13 +44,16 @@ import org.mcadminToolkit.sqlHandler.sqlStructureConstructor;
 import org.mcadminToolkit.playermanagement.ban;
 import org.mcadminToolkit.whitelist.whitelist;
 
+import org.mcadminToolkit.sqlHandler.*;
+
 public class expressServer {
     public static JavaPlugin pluginGlobal;
+    public static Connection conGlobal;
 
-    public static void initializeServer(JavaPlugin plugin) {
+    public static void initializeServer(JavaPlugin plugin, Connection con) {
 
         pluginGlobal = plugin;
-
+        conGlobal = con;
         //Path cert = new File("cert.pem").toPath();
         //Path key = new File("key.pem").toPath();
 
@@ -74,8 +77,6 @@ public class expressServer {
         Express app = new Express(new HttpsConfigurator(sslContext));
         app.bind(new Bindings());
         app.listen(2137);
-
-        Connection con = sqlConnector.connect("TEST.db");
         sqlStructureConstructor.checkStructure(con);
         System.out.println("All done");
     }
@@ -317,13 +318,28 @@ class Bindings {
         Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
         String body = inputBody.hasNext() ? inputBody.next() : "";
 
+        JSONObject json = new JSONObject(body);
+        String sesKey = json.getString("sesKey");
+
         try {
-            String generatedSessionKey = session.createSession(body);
+            String generatedSessionKey = session.createSession(sesKey);
 
             res.send(generatedSessionKey);
         } catch (CreateSessionException e) {
             res.send("error");
         }
+    }
+
+    @DynExpress(context = "/REGISTER", method = RequestMethod.POST)
+    public void getREGISTER (Request req, Response res) throws AuthKeyRegistrationException {
+        Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
+        String body = inputBody.hasNext() ? inputBody.next() : "";
+
+        JSONObject json = new JSONObject(body);
+        String secLvl = json.getString("secLvl");
+
+        String authKey = authKeyRegistration.registerNewAuthKey(sqlConnector.connection, 1);
+        res.send(authKey);
     }
 
     @DynExpress(method = RequestMethod.POST) // Only the method is defined, "/" is used as context
