@@ -27,6 +27,7 @@ import java.time.Instant;
 import java.util.*;
 
 import org.bukkit.plugin.java.JavaPlugin;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.mcadminToolkit.auth.CreateSessionException;
 import org.mcadminToolkit.auth.NoSessionException;
@@ -122,20 +123,34 @@ class Bindings {
             return;
         }
 
-        List<String> players = new ArrayList<String> ();
+        List<playerInfo> onlinePlayers = new ArrayList<playerInfo> ();
 
-        List<playerInfo> infos = new ArrayList<playerInfo>();
+        List<playerInfo> offlinePlayers = new ArrayList<playerInfo>();
 
-        infos.addAll(Arrays.asList(playerslist.getPlayers(expressServer.pluginGlobal)));
-        infos.addAll(Arrays.asList(offlineplayerslist.getOfflinePlayers(expressServer.pluginGlobal)));
+        onlinePlayers.addAll(Arrays.asList(playerslist.getPlayers(expressServer.pluginGlobal)));
+        offlinePlayers.addAll(Arrays.asList(offlineplayerslist.getOfflinePlayers(expressServer.pluginGlobal)));
 
         List<String> playerNicknames = new ArrayList<String>();
 
-        for (playerInfo info : infos) {
-            playerNicknames.add (info.name);
+        JSONArray onlineArray = new JSONArray();
+        JSONArray offlineArray = new JSONArray();
+
+        for (playerInfo info : onlinePlayers) {
+            //playerNicknames.add (info.name);
+            onlineArray.put(info.name);
         }
 
-        res.send(Arrays.toString(playerNicknames.toArray()));
+        for (playerInfo info : offlinePlayers) {
+            //playerNicknames.add (info.name);
+            offlineArray.put(info.name);
+        }
+
+        JSONObject obj = new JSONObject();
+        obj.put ("online", onlineArray);
+        obj.put ("offline", offlineArray);
+
+        //res.send(Arrays.toString(playerNicknames.toArray()));
+        res.send(obj.toString());
     }
 
     @DynExpress(context = "/BANLIST", method = RequestMethod.POST) // Both defined
@@ -305,6 +320,11 @@ class Bindings {
             return;
         }
 
+        JSONObject obj = new JSONObject();
+        obj.put ("cpuLoad", serverStats.cpuUsage(expressServer.pluginGlobal));
+        obj.put ("playersOnline", serverStats.playersOnline(expressServer.pluginGlobal));
+        obj.put ("ramUsage", serverStats.ramUsage(expressServer.pluginGlobal));
+
         res.send(serverStats.cpuUsage(expressServer.pluginGlobal) + serverStats.playersOnline(expressServer.pluginGlobal) + serverStats.ramUsage(expressServer.pluginGlobal));
     }
 
@@ -318,11 +338,8 @@ class Bindings {
         Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
         String body = inputBody.hasNext() ? inputBody.next() : "";
 
-        JSONObject json = new JSONObject(body);
-        String sesKey = json.getString("sesKey");
-
         try {
-            String generatedSessionKey = session.createSession(sesKey);
+            String generatedSessionKey = session.createSession(body);
 
             res.send(generatedSessionKey);
         } catch (CreateSessionException e) {
@@ -336,9 +353,9 @@ class Bindings {
         String body = inputBody.hasNext() ? inputBody.next() : "";
 
         JSONObject json = new JSONObject(body);
-        String secLvl = json.getString("secLvl");
+        int secLvl = json.getInt("secLvl");
 
-        String authKey = authKeyRegistration.registerNewAuthKey(sqlConnector.connection, 1);
+        String authKey = authKeyRegistration.registerNewAuthKey(sqlConnector.connection, secLvl);
         res.send(authKey);
     }
 
