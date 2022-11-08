@@ -47,6 +47,8 @@ import org.mcadminToolkit.whitelist.whitelist;
 
 import org.mcadminToolkit.sqlHandler.*;
 
+import static org.mcadminToolkit.express.utils.middleware.Middleware.cors;
+
 public class expressServer {
     public static JavaPlugin pluginGlobal;
     public static Connection conGlobal;
@@ -77,6 +79,7 @@ public class expressServer {
 
         Express app = new Express(new HttpsConfigurator(sslContext));
         app.bind(new Bindings());
+        app.use(cors ());
         app.listen(2137);
         sqlStructureConstructor.checkStructure(con);
         System.out.println("All done");
