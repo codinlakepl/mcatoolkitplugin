@@ -130,8 +130,6 @@ class Bindings {
         onlinePlayers.addAll(Arrays.asList(playerslist.getPlayers(expressServer.pluginGlobal)));
         offlinePlayers.addAll(Arrays.asList(offlineplayerslist.getOfflinePlayers(expressServer.pluginGlobal)));
 
-        List<String> playerNicknames = new ArrayList<String>();
-
         JSONArray onlineArray = new JSONArray();
         JSONArray offlineArray = new JSONArray();
 
@@ -338,10 +336,22 @@ class Bindings {
         Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
         String body = inputBody.hasNext() ? inputBody.next() : "";
 
+        List<playerInfo> onlinePlayers = new ArrayList<playerInfo> ();
+
+        List<playerInfo> offlinePlayers = new ArrayList<playerInfo>();
+
+        onlinePlayers.addAll(Arrays.asList(playerslist.getPlayers(expressServer.pluginGlobal)));
+        offlinePlayers.addAll(Arrays.asList(offlineplayerslist.getOfflinePlayers(expressServer.pluginGlobal)));
+
+        JSONObject obj = new JSONObject();
+        obj.put ("players", onlinePlayers.size() + "/" + offlinePlayers.size());
+        obj.put ("serverType", "bukkit");
+
         try {
             String generatedSessionKey = session.createSession(body);
+            obj.put ("sessionKey", generatedSessionKey);
 
-            res.send(generatedSessionKey);
+            res.send(obj.toString());
         } catch (CreateSessionException e) {
             res.send("error");
         }
