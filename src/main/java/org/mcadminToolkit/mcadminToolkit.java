@@ -21,8 +21,9 @@ public final class mcadminToolkit extends JavaPlugin {
     @Override
     public void onEnable() {
         getLogger().info("MCAdmin Toolkit Connector successfully initialized");
-        this.getCommand("test").setExecutor(new testCommand());
-        this.getCommand("whitelistGet").setExecutor(new whitelistGetCommand());
+        /*this.getCommand("test").setExecutor(new testCommand());
+        this.getCommand("whitelistGet").setExecutor(new whitelistGetCommand());*/
+        this.getCommand("createAuthKey").setExecutor(new createAuthKeyCommand());
 
         //db init
         Connection con;

@@ -360,7 +360,17 @@ class Bindings {
         }
     }
 
-    @DynExpress(context = "/REGISTER", method = RequestMethod.POST)
+    @DynExpress(context = "/GETAUTHKEY", method = RequestMethod.POST)
+    public void getGETAUTHKEY (Request req, Response res) {
+        Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
+        String body = inputBody.hasNext() ? inputBody.next() : "";
+
+        if (body.equals(createAuthKeyCommand.accessCode) && !createAuthKeyCommand.actualAuthKey.equals("")) {
+            res.send(createAuthKeyCommand.actualAuthKey);
+        }
+    }
+
+    /*@DynExpress(context = "/REGISTER", method = RequestMethod.POST)
     public void getREGISTER (Request req, Response res) throws AuthKeyRegistrationException {
         Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
         String body = inputBody.hasNext() ? inputBody.next() : "";
@@ -370,7 +380,7 @@ class Bindings {
 
         String authKey = authKeyRegistration.registerNewAuthKey(sqlConnector.connection, secLvl);
         res.send(authKey);
-    }
+    }*/
 
     @DynExpress(method = RequestMethod.POST) // Only the method is defined, "/" is used as context
     public void postIndex(Request req, Response res) {

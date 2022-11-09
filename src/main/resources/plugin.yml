@@ -3,12 +3,6 @@ main: org.mcadminToolkit.mcadminToolkit
 version: 0.1
 
 commands:
-  test:
-    description: testowa komenda
-    usage: /<command>
-  whitelistGet:
-    description: Zwraca stringa z whitelista
-    usage: /<command>
   createAuthKey:
-    description: Tworzy auth key
-    usage: /<command>
+    description: Creates auth key and gives you a download code for it
+    usage: /<command> <secLvl>
