@@ -88,14 +88,17 @@ public class expressServer {
 
 class Bindings {
 
-    boolean checkSession (String sessionKey) {
+    int checkSession (String sessionKey) {
+
+        int secLvl;
+
         try {
-            session.isSessionActive(session.getSessionIndex(sessionKey));
+            secLvl = session.isSessionActive(session.getSessionIndex(sessionKey));
         } catch (NoSessionException | SessionExpirationException e) {
-            return false;
+            return 0;
         }
 
-        return true;
+        return secLvl;
     }
 
     @DynExpress() // Default is context="/" and method=RequestMethod.GET
@@ -108,7 +111,9 @@ class Bindings {
         Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
         String body = inputBody.hasNext() ? inputBody.next() : "";
 
-        if (!checkSession(body)) {
+        int secLvl = checkSession(body);
+
+        if (secLvl == 0) {
             res.send("login");
             return;
         }
@@ -121,7 +126,9 @@ class Bindings {
         Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
         String body = inputBody.hasNext() ? inputBody.next() : "";
 
-        if (!checkSession(body)) {
+        int secLvl = checkSession(body);
+
+        if (secLvl == 0) {
             res.send("login");
             return;
         }
@@ -159,7 +166,9 @@ class Bindings {
         Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
         String body = inputBody.hasNext() ? inputBody.next() : "";
 
-        if (!checkSession(body)) {
+        int secLvl = checkSession(body);
+
+        if (secLvl == 0) {
             res.send("login");
             return;
         }
@@ -186,8 +195,15 @@ class Bindings {
         String reason = json.getString("reason");
         int hours = json.getInt("hours");
 
-        if (!checkSession(sessionKey)) {
+        int secLvl = checkSession(sessionKey);
+
+        if (secLvl == 0) {
             res.send("login");
+            return;
+        }
+
+        if (!(secLvl <= 4)) {
+            res.send("perms");
             return;
         }
 
@@ -213,8 +229,15 @@ class Bindings {
         String ip = json.getString("ip");
         String sessionKey = json.getString("sessionKey");
 
-        if (!checkSession(sessionKey)) {
+        int secLvl = checkSession(sessionKey);
+
+        if (secLvl == 0) {
             res.send("login");
+            return;
+        }
+
+        if (!(secLvl <= 2)) {
+            res.send("perms");
             return;
         }
 
@@ -241,8 +264,15 @@ class Bindings {
         String username = json.getString("username");
         String sessionKey = json.getString("sessionKey");
 
-        if (!checkSession(sessionKey)) {
+        int secLvl = checkSession(sessionKey);
+
+        if (secLvl == 0) {
             res.send("login");
+            return;
+        }
+
+        if (!(secLvl <= 4)) {
+            res.send("perms");
             return;
         }
 
@@ -268,8 +298,15 @@ class Bindings {
         String sessionKey = json.getString("sessionKey");
         String reason = json.getString("reason");
 
-        if (!checkSession(sessionKey)) {
+        int secLvl = checkSession(sessionKey);
+
+        if (secLvl == 0) {
             res.send("login");
+            return;
+        }
+
+        if (!(secLvl <= 5)) {
+            res.send("perms");
             return;
         }
 
@@ -295,8 +332,15 @@ class Bindings {
         String username = json.getString("username");
         String sessionKey = json.getString("sessionKey");
 
-        if (!checkSession(sessionKey)) {
+        int secLvl = checkSession(sessionKey);
+
+        if (secLvl == 0) {
             res.send("login");
+            return;
+        }
+
+        if (!(secLvl <= 5)) {
+            res.send("perms");
             return;
         }
 
@@ -316,8 +360,15 @@ class Bindings {
         Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
         String body = inputBody.hasNext() ? inputBody.next() : "";
 
-        if (!checkSession(body)) {
+        int secLvl = checkSession(body);
+
+        if (secLvl == 0) {
             res.send("login");
+            return;
+        }
+
+        if (!(secLvl <= 3)) {
+            res.send("perms");
             return;
         }
 

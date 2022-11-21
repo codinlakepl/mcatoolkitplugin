@@ -36,6 +36,10 @@ public class createAuthKeyCommand implements CommandExecutor {
         int secLvl;
         try {
             secLvl = Integer.parseInt(args[0]);
+            if (!(secLvl >= 1 && secLvl <= 6)) {
+                sender.sendMessage("Security level must be a number between 1 (inclusive) and 6 (inclusive)");
+                return false;
+            }
         } catch (Exception e) {
             sender.sendMessage("Security level must be a number");
             return false;

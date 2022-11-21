@@ -14,14 +14,6 @@ public class sqlStructureConstructor {
             statement.setQueryTimeout(30);
 
             statement.executeUpdate("create table\n" +
-                    "  `accounts` (\n" +
-                    "    `id` integer not null primary key autoincrement,\n" +
-                    "    `name` varchar(20) null,\n" +
-                    "    `pass` TEXT null,\n" +
-                    "    `secLvl` INT null,\n" +
-                    "    `created_at` datetime not null default CURRENT_TIMESTAMP\n" +
-                    "  )");
-            statement.executeUpdate("create table\n" +
                     "  `authkeys` (\n" +
                     "    `id` integer not null primary key autoincrement,\n" +
                     "    `authKey` TEXT null,\n" +
