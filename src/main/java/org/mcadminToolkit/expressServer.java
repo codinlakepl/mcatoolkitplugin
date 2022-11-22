@@ -11,10 +11,12 @@ import express.http.RequestMethod;
 import express.http.request.Request;
 import express.http.response.Response;
 
+import javax.imageio.ImageIO;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.X509ExtendedKeyManager;
 import javax.net.ssl.X509ExtendedTrustManager;
-import java.io.InputStream;
+import java.awt.image.BufferedImage;
+import java.io.*;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
@@ -26,6 +28,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
+import org.bouncycastle.mime.encoding.Base64OutputStream;
+import org.bouncycastle.util.encoders.Base64;
+import org.bouncycastle.util.encoders.Base64Encoder;
 import org.bukkit.Server;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.CachedServerIcon;
@@ -48,6 +53,7 @@ import org.mcadminToolkit.playermanagement.ban;
 import org.mcadminToolkit.whitelist.whitelist;
 
 import org.mcadminToolkit.sqlHandler.*;
+import sun.misc.BASE64Encoder;
 
 import static org.mcadminToolkit.express.utils.middleware.Middleware.cors;
 
@@ -355,6 +361,40 @@ class Bindings {
         }
     }
 
+    @DynExpress(context = "/WHITEREMOVE", method = RequestMethod.POST) // Both defined
+    public void getWHITEREMOVE(Request req, Response res) {
+        /*res.send("Accepts: WHITEADD <username> \n" +
+                "Adds specific player to whitelist");*/
+
+        Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
+        String body = inputBody.hasNext() ? inputBody.next() : "";
+
+        JSONObject json = new JSONObject(body); // {"username": "IpyZ", "sessionKey": "test"}
+
+        String username = json.getString("username");
+        String sessionKey = json.getString("sessionKey");
+
+        int secLvl = checkSession(sessionKey);
+
+        if (secLvl == 0) {
+            res.send("login");
+            return;
+        }
+
+        if (!(secLvl <= 5)) {
+            res.send("perms");
+            return;
+        }
+
+        try {
+            whitelist.removeWhitelistPlayer(expressServer.pluginGlobal, username);
+
+            res.send("Done");
+        } catch (Exception e) {
+            res.send(e.getMessage());
+        }
+    }
+
     @DynExpress(context = "/STATS", method = RequestMethod.POST) // Both defined
     public void getSTATS(Request req, Response res) {
         //res.send("Returns server stats (CPU, RAM usage ect.)");
@@ -394,21 +434,37 @@ class Bindings {
 
         List<playerInfo> onlinePlayers = new ArrayList<playerInfo> ();
 
-        List<playerInfo> offlinePlayers = new ArrayList<playerInfo>();
-
         Server server = expressServer.pluginGlobal.getServer();
 
-        CachedServerIcon icon = server.getServerIcon();
+        BufferedImage img = null;
 
-        String iconString = icon.toString();
+        String b64Img = null;
+
+        File iconFile = new File ("server-icon.png");
+        if (iconFile.exists() && !iconFile.isDirectory()) {
+            try {
+                img = ImageIO.read(iconFile);
+
+                ByteArrayOutputStream os = new ByteArrayOutputStream();
+                ImageIO.write(img, "png", os);
+
+                BASE64Encoder encoder = new BASE64Encoder();
+
+                b64Img = encoder.encode(os.toByteArray());
+            } catch (IOException e) {
+                b64Img = "none";
+            }
+        } else {
+            b64Img = "none";
+        }
 
         onlinePlayers.addAll(Arrays.asList(playerslist.getPlayers(expressServer.pluginGlobal)));
-        offlinePlayers.addAll(Arrays.asList(offlineplayerslist.getOfflinePlayers(expressServer.pluginGlobal)));
+        //offlinePlayers.addAll(Arrays.asList(offlineplayerslist.getOfflinePlayers(expressServer.pluginGlobal)));
 
         JSONObject obj = new JSONObject();
-        obj.put ("players", onlinePlayers.size() + "/" + offlinePlayers.size());
+        obj.put ("players", onlinePlayers.size() + "/" + server.getMaxPlayers());
         obj.put ("serverType", "bukkit");
-        obj.put ("icon", iconString);
+        obj.put ("icon", b64Img);
 
         try {
             String generatedSessionKey = session.createSession(body);

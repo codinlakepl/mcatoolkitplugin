@@ -34,4 +34,17 @@ public class whitelist {
 
         return "Success";
     }
+
+    public static String removeWhitelistPlayer (JavaPlugin plugin, String userName) {
+        Server server = plugin.getServer();
+
+        try{
+            server.dispatchCommand(server.getConsoleSender(), "whitelist remove " + userName);
+            server.reloadWhitelist();
+        }catch (Exception err){
+            return err.toString();
+        }
+
+        return "Success";
+    }
 }
