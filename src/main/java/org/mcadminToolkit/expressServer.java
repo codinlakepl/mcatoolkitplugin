@@ -26,7 +26,9 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
+import org.bukkit.Server;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.util.CachedServerIcon;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.mcadminToolkit.auth.CreateSessionException;
@@ -394,12 +396,19 @@ class Bindings {
 
         List<playerInfo> offlinePlayers = new ArrayList<playerInfo>();
 
+        Server server = expressServer.pluginGlobal.getServer();
+
+        CachedServerIcon icon = server.getServerIcon();
+
+        String iconString = icon.toString();
+
         onlinePlayers.addAll(Arrays.asList(playerslist.getPlayers(expressServer.pluginGlobal)));
         offlinePlayers.addAll(Arrays.asList(offlineplayerslist.getOfflinePlayers(expressServer.pluginGlobal)));
 
         JSONObject obj = new JSONObject();
         obj.put ("players", onlinePlayers.size() + "/" + offlinePlayers.size());
         obj.put ("serverType", "bukkit");
+        obj.put ("icon", iconString);
 
         try {
             String generatedSessionKey = session.createSession(body);
