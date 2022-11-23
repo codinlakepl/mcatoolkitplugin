@@ -234,7 +234,7 @@ class Bindings {
 
         JSONObject json = new JSONObject(body); // {"ip": "127.0.0.1", "sessionKey": "test"}
 
-        String ip = json.getString("ip");
+        String ip = json.getString("uuid");
         String sessionKey = json.getString("sessionKey");
 
         int secLvl = checkSession(sessionKey);
@@ -302,7 +302,7 @@ class Bindings {
 
         JSONObject json = new JSONObject(body); // {"username": "IpyZ", "reason": "test123", "sessionKey": "test"}
 
-        String username = json.getString("username");
+        String username = json.getString("uuid");
         String sessionKey = json.getString("sessionKey");
         String reason = json.getString("reason");
 
@@ -419,7 +419,7 @@ class Bindings {
         obj.put ("playersOnline", serverStats.playersOnline(expressServer.pluginGlobal));
         obj.put ("ramUsage", serverStats.ramUsage(expressServer.pluginGlobal));
 
-        res.send(serverStats.cpuUsage(expressServer.pluginGlobal) + serverStats.playersOnline(expressServer.pluginGlobal) + serverStats.ramUsage(expressServer.pluginGlobal));
+        res.send(obj.toString());
     }
 
     @DynExpress(context = "/ISWORKING") // Both defined

@@ -30,7 +30,7 @@ public class serverStats {
         Server server = plugin.getServer();
         OperatingSystemMXBean system = (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
 
-        double cpuUsageDouble = system.getSystemCpuLoad();
+        double cpuUsageDouble = Math.round((system.getSystemCpuLoad() * 100) * 100) / 100;
         String cpuUsage = Double.toString(cpuUsageDouble) + "%";
 
         return cpuUsage;
