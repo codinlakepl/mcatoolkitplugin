@@ -22,6 +22,32 @@ public class whitelist {
         return  whitelistTMP.toArray(new String[0]);
     }
 
+    public static String enableWhitelist (JavaPlugin plugin) {
+        Server server = plugin.getServer();
+
+        try {
+            server.dispatchCommand(server.getConsoleSender(), "whitelist on");
+            server.reloadWhitelist();
+        } catch (Exception err) {
+            return err.toString();
+        }
+
+        return "Success";
+    }
+
+    public static String disableWhitelist (JavaPlugin plugin) {
+        Server server = plugin.getServer();
+
+        try {
+            server.dispatchCommand(server.getConsoleSender(), "whitelist off");
+            server.reloadWhitelist();
+        } catch (Exception err) {
+            return err.toString();
+        }
+
+        return "Success";
+    }
+
     public static String addWhitelistPlayer(JavaPlugin plugin, String userName){
         Server server = plugin.getServer();
 

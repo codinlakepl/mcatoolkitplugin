@@ -126,7 +126,16 @@ class Bindings {
             return;
         }
 
-        res.send(Arrays.toString(whitelist.getWhiteList(expressServer.pluginGlobal)));
+        JSONArray jsonArray = new JSONArray();
+
+        String[] arr = whitelist.getWhiteList(expressServer.pluginGlobal);
+
+        for (String player :
+                arr) {
+            jsonArray.put(player);
+        }
+
+        res.send(jsonArray.toString());
     }
 
     @DynExpress(context = "/PLAYERS", method = RequestMethod.POST) // Both defined
@@ -181,11 +190,19 @@ class Bindings {
             return;
         }
 
-        List<String> bans = new ArrayList<String>();
-        bans.addAll(Arrays.asList(banlist.playerBanList(expressServer.pluginGlobal)));
-        bans.addAll(Arrays.asList(banlist.ipBanList(expressServer.pluginGlobal)));
+        List<String> normalBans = new ArrayList<String>();
+        List<String> ipBans = new ArrayList<String>();
+        normalBans.addAll(Arrays.asList(banlist.playerBanList(expressServer.pluginGlobal)));
+        ipBans.addAll(Arrays.asList(banlist.ipBanList(expressServer.pluginGlobal)));
 
-        res.send (Arrays.toString(bans.toArray()));
+        JSONArray normalBansJson = new JSONArray (normalBans);
+        JSONArray ipBansJson = new JSONArray (ipBans);
+
+        JSONObject json = new JSONObject();
+        json.put("normalBans", normalBansJson);
+        json.put("ipBans", ipBans);
+
+        res.send (json.toString());
     }
 
     @DynExpress(context = "/BAN", method = RequestMethod.POST) // Both defined
@@ -218,7 +235,7 @@ class Bindings {
         try {
             ban.ban(expressServer.pluginGlobal, username, reason, Date.from(new Date().toInstant().plus(Duration.ofHours(hours))));
 
-            res.send("Done");
+            res.send("Success");
         } catch (Exception e) {
             res.send(e.getMessage());
         }
@@ -253,7 +270,7 @@ class Bindings {
         try {
             ban.banIp(expressServer.pluginGlobal, UUID.fromString(ip));
 
-            res.send("Done");
+            res.send("Success");
         } catch (Exception e) {
             res.send(e.getMessage());
         }
@@ -287,7 +304,38 @@ class Bindings {
         try {
             ban.unban(expressServer.pluginGlobal, username);
 
-            res.send("Done");
+            res.send("Success");
+        } catch (Exception e) {
+            res.send(e.getMessage());
+        }
+    }
+
+    @DynExpress(context = "/UNBANIP", method = RequestMethod.POST)
+    public void getUNBANIP (Request req, Response res) {
+        Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
+        String body = inputBody.hasNext() ? inputBody.next() : "";
+
+        JSONObject json = new JSONObject(body); // {"ip": "127.0.0.1", "sessionKey": "test"}
+
+        String ip = json.getString("ip");
+        String sessionKey = json.getString("sessionKey");
+
+        int secLvl = checkSession(sessionKey);
+
+        if (secLvl == 0) {
+            res.send("login");
+            return;
+        }
+
+        if (!(secLvl <= 2)) {
+            res.send("perms");
+            return;
+        }
+
+        try {
+            ban.unbanIp(expressServer.pluginGlobal, ip);
+
+            res.send("Success");
         } catch (Exception e) {
             res.send(e.getMessage());
         }
@@ -321,9 +369,65 @@ class Bindings {
         try{
             //ban.ban(expressServer.pluginGlobal, body, "TEST", Date.from(Instant.now()));
             kick.kick(expressServer.pluginGlobal, username, reason);
-            res.send(username + " Succes!");
+            res.send("Success");
         }catch (Exception e){
             res.send(e.toString());
+        }
+    }
+
+    @DynExpress(context = "/WHITEON", method = RequestMethod.POST)
+    public void getWHITEON (Request req, Response res) {
+        Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
+        String body = inputBody.hasNext() ? inputBody.next() : "";
+
+        int secLvl = checkSession(body);
+
+        if (secLvl == 0) {
+            res.send("login");
+            return;
+        }
+
+        if (!(secLvl <= 5)) {
+            res.send("perms");
+            return;
+        }
+
+        String output;
+
+        try {
+            output = whitelist.enableWhitelist(expressServer.pluginGlobal);
+
+            res.send(output);
+        } catch (Exception e) {
+            res.send(e.getMessage());
+        }
+    }
+
+    @DynExpress(context = "/WHITEOFF", method = RequestMethod.POST)
+    public void getWHITEOFF (Request req, Response res) {
+        Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
+        String body = inputBody.hasNext() ? inputBody.next() : "";
+
+        int secLvl = checkSession(body);
+
+        if (secLvl == 0) {
+            res.send("login");
+            return;
+        }
+
+        if (!(secLvl <= 5)) {
+            res.send("perms");
+            return;
+        }
+
+        String output;
+
+        try {
+            output = whitelist.disableWhitelist(expressServer.pluginGlobal);
+
+            res.send(output);
+        } catch (Exception e) {
+            res.send(e.getMessage());
         }
     }
 
@@ -352,10 +456,12 @@ class Bindings {
             return;
         }
 
-        try {
-            whitelist.addWhitelistPlayer(expressServer.pluginGlobal, username);
+        String output;
 
-            res.send("Done");
+        try {
+            output = whitelist.addWhitelistPlayer(expressServer.pluginGlobal, username);
+
+            res.send(output);
         } catch (Exception e) {
             res.send(e.getMessage());
         }
@@ -386,10 +492,12 @@ class Bindings {
             return;
         }
 
-        try {
-            whitelist.removeWhitelistPlayer(expressServer.pluginGlobal, username);
+        String output;
 
-            res.send("Done");
+        try {
+            output = whitelist.removeWhitelistPlayer(expressServer.pluginGlobal, username);
+
+            res.send(output);
         } catch (Exception e) {
             res.send(e.getMessage());
         }
@@ -472,7 +580,7 @@ class Bindings {
 
             res.send(obj.toString());
         } catch (CreateSessionException e) {
-            res.send("error");
+            res.send(e.getMessage());
         }
     }
 
