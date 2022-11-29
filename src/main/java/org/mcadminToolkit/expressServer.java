@@ -162,7 +162,12 @@ class Bindings {
 
         for (playerInfo info : onlinePlayers) {
             //playerNicknames.add (info.name);
-            onlineArray.put(info.name);
+
+            JSONObject player = new JSONObject();
+            player.put("name", info.name);
+            player.put("uuid", info.uuid);
+
+            onlineArray.put(player);
         }
 
         for (playerInfo info : offlinePlayers) {
