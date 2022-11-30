@@ -10,13 +10,13 @@ import java.util.UUID;
 
 public class kick {
 
-    public static void kick (JavaPlugin plugin, String playerUUID, String reason) {
+    public static void kick (JavaPlugin plugin, String playerName, String reason) {
         Server server = plugin.getServer();
 
         Player[] players = server.getOnlinePlayers().toArray(new Player[0]);
 
         for (Player player : players) {
-            if (player.getUniqueId().toString().equals(playerUUID)) {
+            if (player.getName().equals(playerName)) {
                 Bukkit.getScheduler().runTask(plugin, new Runnable() {
                     @Override
                     public void run() {

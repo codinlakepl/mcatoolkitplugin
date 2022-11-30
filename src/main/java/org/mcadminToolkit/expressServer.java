@@ -256,8 +256,9 @@ class Bindings {
 
         JSONObject json = new JSONObject(body); // {"ip": "127.0.0.1", "sessionKey": "test"}
 
-        String ip = json.getString("uuid");
+        String playerName = json.getString("name");
         String sessionKey = json.getString("sessionKey");
+        String reason = json.getString("reason");
 
         int secLvl = checkSession(sessionKey);
 
@@ -273,7 +274,7 @@ class Bindings {
 
 
         try {
-            ban.banIp(expressServer.pluginGlobal, UUID.fromString(ip));
+            ban.banIp(expressServer.pluginGlobal, playerName, reason);
 
             res.send("Success");
         } catch (Exception e) {
@@ -355,7 +356,7 @@ class Bindings {
 
         JSONObject json = new JSONObject(body); // {"username": "IpyZ", "reason": "test123", "sessionKey": "test"}
 
-        String username = json.getString("uuid");
+        String username = json.getString("name");
         String sessionKey = json.getString("sessionKey");
         String reason = json.getString("reason");
 

@@ -17,21 +17,21 @@ public class ban {
 
         for (Player player : players) {
             if (player.getName().equals(playerName)) {
-                kick.kick(plugin, player.getUniqueId().toString(), reason + "\nautokick after ban");
+                kick.kick(plugin, player.getName(), reason + "\nautokick after ban");
                 break;
             }
         }
     }
 
-    public static void banIp (JavaPlugin plugin, UUID playerUUID) {
+    public static void banIp (JavaPlugin plugin, String playerName, String reason) {
         Server server = plugin.getServer();
 
         Player[] players = server.getOnlinePlayers().toArray(new Player[0]);
 
         for (Player player : players) {
-            if (player.getUniqueId().equals(playerUUID)) {
+            if (player.getName().equals(playerName)) {
                 server.banIP(player.getAddress().toString());
-                kick.kick(plugin, player.getUniqueId().toString(), "\nautokick after ban");
+                kick.kick(plugin, player.getName(), reason + "\nautokick after ban");
                 break;
             }
         }
