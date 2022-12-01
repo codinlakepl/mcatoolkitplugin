@@ -33,7 +33,6 @@ public class sqlStructureConstructor {
             statement = con.createStatement();
             statement.setQueryTimeout(30);
 
-            statement.executeQuery("SELECT * FROM accounts");
             statement.executeQuery("SELECT * FROM authKeys");
         } catch (SQLException e) {
             createStructure(con);

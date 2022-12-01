@@ -89,7 +89,6 @@ public class expressServer {
         app.bind(new Bindings());
         app.use(cors ());
         app.listen(2137);
-        sqlStructureConstructor.checkStructure(con);
         System.out.println("All done");
     }
 }
