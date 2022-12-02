@@ -134,7 +134,11 @@ class Bindings {
             jsonArray.put(player);
         }
 
-        res.send(jsonArray.toString());
+        JSONObject obj = new JSONObject();
+        obj.put("isEnabled", whitelist.checkWhitelistStatus(expressServer.pluginGlobal));
+        obj.put("players", jsonArray);
+
+        res.send(obj.toString());
     }
 
     @DynExpress(context = "/PLAYERS", method = RequestMethod.POST) // Both defined

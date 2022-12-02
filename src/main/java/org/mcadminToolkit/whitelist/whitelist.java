@@ -73,4 +73,18 @@ public class whitelist {
 
         return "Success";
     }
+
+    public static String checkWhitelistStatus (JavaPlugin plugin) {
+        Server server = plugin.getServer();
+
+        boolean hasWhitelist;
+
+        try {
+            hasWhitelist = server.hasWhitelist();
+        } catch (Exception err) {
+            return err.getMessage();
+        }
+
+        return String.valueOf(hasWhitelist);
+    }
 }
