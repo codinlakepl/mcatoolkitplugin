@@ -135,7 +135,7 @@ class Bindings {
         }
 
         JSONObject obj = new JSONObject();
-        obj.put("isEnabled", whitelist.checkWhitelistStatus(expressServer.pluginGlobal));
+        obj.put("isEnabled", Boolean.parseBoolean(whitelist.checkWhitelistStatus(expressServer.pluginGlobal)));
         obj.put("players", jsonArray);
 
         res.send(obj.toString());
