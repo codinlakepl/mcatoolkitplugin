@@ -64,6 +64,25 @@ public class session {
 
         throw new CreateSessionException();
     }
+
+    public static void extendSession (int sessionIndex) throws NoSessionException {
+
+        session s = null;
+
+        try {
+            s = activeSessions.get(sessionIndex);
+        } catch (IndexOutOfBoundsException e) {
+            throw new NoSessionException ();
+        }
+
+        try {
+            isSessionActive (sessionIndex);
+        } catch (SessionExpirationException e) {
+            throw new NoSessionException();
+        }
+
+        s.expirationDate = Date.from(new Date().toInstant().plus(Duration.ofHours(1)));
+    }
 }
 
 

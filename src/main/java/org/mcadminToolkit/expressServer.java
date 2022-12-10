@@ -108,6 +108,16 @@ class Bindings {
         return secLvl;
     }
 
+    boolean extendSession (String sessionKey) {
+        try {
+            session.extendSession(session.getSessionIndex(sessionKey));
+        } catch (NoSessionException e) {
+            return false;
+        }
+
+        return true;
+    }
+
     @DynExpress() // Default is context="/" and method=RequestMethod.GET
     public void getHuj(Request req, Response res) {
         res.send("MCAdmin Toolkit API v0.1");
@@ -120,7 +130,8 @@ class Bindings {
 
         int secLvl = checkSession(body);
 
-        if (secLvl == 0) {
+        // request to login if user isn't logged in or, extedning session time failed
+        if (secLvl == 0 && !extendSession(body)) {
             res.send("login");
             return;
         }
@@ -148,7 +159,7 @@ class Bindings {
 
         int secLvl = checkSession(body);
 
-        if (secLvl == 0) {
+        if (secLvl == 0 && !extendSession(body)) {
             res.send("login");
             return;
         }
@@ -193,7 +204,7 @@ class Bindings {
 
         int secLvl = checkSession(body);
 
-        if (secLvl == 0) {
+        if (secLvl == 0 && !extendSession(body)) {
             res.send("login");
             return;
         }
@@ -230,7 +241,7 @@ class Bindings {
 
         int secLvl = checkSession(sessionKey);
 
-        if (secLvl == 0) {
+        if (secLvl == 0 && !extendSession(sessionKey)) {
             res.send("login");
             return;
         }
@@ -265,7 +276,7 @@ class Bindings {
 
         int secLvl = checkSession(sessionKey);
 
-        if (secLvl == 0) {
+        if (secLvl == 0 && !extendSession(sessionKey)) {
             res.send("login");
             return;
         }
@@ -300,7 +311,7 @@ class Bindings {
 
         int secLvl = checkSession(sessionKey);
 
-        if (secLvl == 0) {
+        if (secLvl == 0 && !extendSession(sessionKey)) {
             res.send("login");
             return;
         }
@@ -331,7 +342,7 @@ class Bindings {
 
         int secLvl = checkSession(sessionKey);
 
-        if (secLvl == 0) {
+        if (secLvl == 0 && !extendSession(sessionKey)) {
             res.send("login");
             return;
         }
@@ -365,7 +376,7 @@ class Bindings {
 
         int secLvl = checkSession(sessionKey);
 
-        if (secLvl == 0) {
+        if (secLvl == 0 && !extendSession(sessionKey)) {
             res.send("login");
             return;
         }
@@ -391,7 +402,7 @@ class Bindings {
 
         int secLvl = checkSession(body);
 
-        if (secLvl == 0) {
+        if (secLvl == 0 && !extendSession(body)) {
             res.send("login");
             return;
         }
@@ -419,7 +430,7 @@ class Bindings {
 
         int secLvl = checkSession(body);
 
-        if (secLvl == 0) {
+        if (secLvl == 0 && !extendSession(body)) {
             res.send("login");
             return;
         }
@@ -455,7 +466,7 @@ class Bindings {
 
         int secLvl = checkSession(sessionKey);
 
-        if (secLvl == 0) {
+        if (secLvl == 0 && !extendSession(sessionKey)) {
             res.send("login");
             return;
         }
@@ -491,7 +502,7 @@ class Bindings {
 
         int secLvl = checkSession(sessionKey);
 
-        if (secLvl == 0) {
+        if (secLvl == 0 && !extendSession(sessionKey)) {
             res.send("login");
             return;
         }
@@ -521,7 +532,7 @@ class Bindings {
 
         int secLvl = checkSession(body);
 
-        if (secLvl == 0) {
+        if (secLvl == 0 && !extendSession(body)) {
             res.send("login");
             return;
         }
