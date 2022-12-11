@@ -61,7 +61,7 @@ public class expressServer {
     public static JavaPlugin pluginGlobal;
     public static Connection conGlobal;
 
-    public static void initializeServer(JavaPlugin plugin, Connection con) {
+    public static void initializeServer(JavaPlugin plugin, Connection con, int port) {
 
         pluginGlobal = plugin;
         conGlobal = con;
@@ -74,9 +74,9 @@ public class expressServer {
 
 
 
-        X509ExtendedKeyManager keyManager = PemUtils.loadIdentityMaterial(FileSystems.getDefault().getPath("rootCA.crt"), FileSystems.getDefault().getPath("rootCA.key"));
+        X509ExtendedKeyManager keyManager = PemUtils.loadIdentityMaterial(FileSystems.getDefault().getPath("./plugins/MCAdmin-Toolkit-Connector/rootCA.crt"), FileSystems.getDefault().getPath("./plugins/MCAdmin-Toolkit-Connector/rootCA.key"));
 
-        X509ExtendedTrustManager trustManager = PemUtils.loadTrustMaterial(FileSystems.getDefault().getPath("rootCA.crt"));
+        X509ExtendedTrustManager trustManager = PemUtils.loadTrustMaterial(FileSystems.getDefault().getPath("./plugins/MCAdmin-Toolkit-Connector/rootCA.crt"));
 
         SSLFactory sslFactory = SSLFactory.builder()
                 .withIdentityMaterial(keyManager)
@@ -88,7 +88,7 @@ public class expressServer {
         Express app = new Express(new HttpsConfigurator(sslContext));
         app.bind(new Bindings());
         app.use(cors ());
-        app.listen(2137);
+        app.listen(port);
         System.out.println("All done");
     }
 }
@@ -131,6 +131,7 @@ class Bindings {
         int secLvl = checkSession(body);
 
         // request to login if user isn't logged in or, extedning session time failed
+        // input text: session key
         if (secLvl == 0 && !extendSession(body)) {
             res.send("login");
             return;
@@ -157,6 +158,7 @@ class Bindings {
         Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
         String body = inputBody.hasNext() ? inputBody.next() : "";
 
+        // input text: session key
         int secLvl = checkSession(body);
 
         if (secLvl == 0 && !extendSession(body)) {
@@ -202,6 +204,7 @@ class Bindings {
         Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
         String body = inputBody.hasNext() ? inputBody.next() : "";
 
+        // input text: session key
         int secLvl = checkSession(body);
 
         if (secLvl == 0 && !extendSession(body)) {
@@ -234,6 +237,7 @@ class Bindings {
 
         JSONObject json = new JSONObject(body); // {"username": "IpyZ", "reason": "test123", "hours": 2 "sessionKey": "test"}
 
+        // input json: username, sessionKey, reason, hours
         String username = json.getString("username");
         String sessionKey = json.getString("sessionKey");
         String reason = json.getString("reason");
@@ -270,7 +274,8 @@ class Bindings {
 
         JSONObject json = new JSONObject(body); // {"ip": "127.0.0.1", "sessionKey": "test"}
 
-        String playerName = json.getString("name");
+        // input json: username, sessionKey, reason
+        String playerName = json.getString("username");
         String sessionKey = json.getString("sessionKey");
         String reason = json.getString("reason");
 
@@ -306,6 +311,7 @@ class Bindings {
 
         JSONObject json = new JSONObject(body); // {"username": "IpyZ", "sessionKey": "test"}
 
+        // input json: username, sessionKey
         String username = json.getString("username");
         String sessionKey = json.getString("sessionKey");
 
@@ -337,6 +343,7 @@ class Bindings {
 
         JSONObject json = new JSONObject(body); // {"ip": "127.0.0.1", "sessionKey": "test"}
 
+        // input json: ip, sessionKey
         String ip = json.getString("ip");
         String sessionKey = json.getString("sessionKey");
 
@@ -370,7 +377,8 @@ class Bindings {
 
         JSONObject json = new JSONObject(body); // {"username": "IpyZ", "reason": "test123", "sessionKey": "test"}
 
-        String username = json.getString("name");
+        // input json: username, sessionKey, reason
+        String username = json.getString("username");
         String sessionKey = json.getString("sessionKey");
         String reason = json.getString("reason");
 
@@ -461,6 +469,7 @@ class Bindings {
 
         JSONObject json = new JSONObject(body); // {"username": "IpyZ", "sessionKey": "test"}
 
+        // input json: username, sessionKey
         String username = json.getString("username");
         String sessionKey = json.getString("sessionKey");
 
@@ -497,6 +506,7 @@ class Bindings {
 
         JSONObject json = new JSONObject(body); // {"username": "IpyZ", "sessionKey": "test"}
 
+        // input json: username, sessionKey
         String username = json.getString("username");
         String sessionKey = json.getString("sessionKey");
 

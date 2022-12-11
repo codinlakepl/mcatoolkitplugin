@@ -8,7 +8,7 @@ public class sqlConnector {
 
     public static Connection connection;
 
-    static String staticPath = "./";
+    static String staticPath = "./plugins/MCAdmin-Toolkit-Connector/";
 
     public static Connection connect (String filename) {
         String url = "jdbc:sqlite:" + staticPath + filename;
