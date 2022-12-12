@@ -132,7 +132,7 @@ class Bindings {
 
         // request to login if user isn't logged in or, extedning session time failed
         // input text: session key
-        if (secLvl == 0 && !extendSession(body)) {
+        if (secLvl == 0 /*&& !extendSession(body)*/) {
             res.send("login");
             return;
         }
@@ -161,7 +161,7 @@ class Bindings {
         // input text: session key
         int secLvl = checkSession(body);
 
-        if (secLvl == 0 && !extendSession(body)) {
+        if (secLvl == 0 /*&& !extendSession(body)*/) {
             res.send("login");
             return;
         }
@@ -207,7 +207,7 @@ class Bindings {
         // input text: session key
         int secLvl = checkSession(body);
 
-        if (secLvl == 0 && !extendSession(body)) {
+        if (secLvl == 0 /*&& !extendSession(body)*/) {
             res.send("login");
             return;
         }
@@ -542,7 +542,7 @@ class Bindings {
 
         int secLvl = checkSession(body);
 
-        if (secLvl == 0 && !extendSession(body)) {
+        if (secLvl == 0 /*&& !extendSession(body)*/) {
             res.send("login");
             return;
         }
