@@ -28,6 +28,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 
+import okhttp3.*;
 import org.bouncycastle.mime.encoding.Base64OutputStream;
 import org.bouncycastle.util.encoders.Base64;
 import org.bouncycastle.util.encoders.Base64Encoder;
@@ -35,6 +36,7 @@ import org.bukkit.Server;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.CachedServerIcon;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.mcadminToolkit.auth.CreateSessionException;
 import org.mcadminToolkit.auth.NoSessionException;
@@ -61,10 +63,27 @@ public class expressServer {
     public static JavaPlugin pluginGlobal;
     public static Connection conGlobal;
 
-    public static void initializeServer(JavaPlugin plugin, Connection con, int port) {
+    public static OkHttpClient client = null;
+
+    public static String serverAddress;
+    public static int serverPort = 0;
+
+    public static String baseUrl = "http://127.0.0.1:3000";
+
+    public static void initializeServer(JavaPlugin plugin, Connection con, int port, String address, String consoleEmail, String consolePassword) {
 
         pluginGlobal = plugin;
         conGlobal = con;
+        serverAddress = address;
+        serverPort = port;
+
+        // x4wSkjCq29hwFSJ1PWqdDqGCcsHsyy
+
+        if (!consoleEmail.equals("") || !consolePassword.equals("")) {
+            client = new OkHttpClient.Builder()
+                    .addInterceptor(new BasicAuthInterceptor(consoleEmail, consolePassword))
+                    .build();
+        }
         //Path cert = new File("cert.pem").toPath();
         //Path key = new File("key.pem").toPath();
 
@@ -89,7 +108,83 @@ public class expressServer {
         app.bind(new Bindings());
         app.use(cors ());
         app.listen(port);
-        System.out.println("All done");
+
+        Timer timer = new Timer();
+
+        timer.schedule(new RegenerateAuthkeysForConsole(), 86400000, 86400000);
+    }
+
+    public static void generateAuthkeysForConsole () throws IOException, JSONException {
+
+        if (client == null) return;
+
+        okhttp3.Request connectionsCountRequest = new okhttp3.Request.Builder()
+                .url (baseUrl + "/getConnectionsCount")
+                .build();
+
+        int count;
+
+        try (okhttp3.Response response = client.newCall(connectionsCountRequest).execute ()) {
+            JSONObject jsonObject = new JSONObject(response.body().string());
+            if (jsonObject.has ("error")) {
+                throw new IOException();
+            }
+
+            count = jsonObject.getInt("count");
+        }
+
+        JSONArray authkeys = new JSONArray();
+
+        for (int i = 0; i < count; i++) {
+            authkeys.put(UUID.randomUUID().toString());
+        }
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put ("address", serverAddress);
+        jsonObject.put("port", serverPort);
+        jsonObject.put("authkeys", authkeys);
+
+        MediaType JSON = MediaType.get ("application/json; charset=utf-8");
+
+        RequestBody body = RequestBody.create(jsonObject.toString(), JSON);
+
+        okhttp3.Request setNewAuthkeysRequest = new okhttp3.Request.Builder()
+                .url(baseUrl + "/setNewAuthkeys")
+                .post(body)
+                .build();
+
+        okhttp3.Response response = client.newCall(setNewAuthkeysRequest).execute ();
+
+        if (new JSONObject(response.body().string()).has("error")) {
+            throw new IOException();
+        }
+    }
+}
+
+class RegenerateAuthkeysForConsole extends TimerTask {
+    public void run () {
+        try {
+            expressServer.generateAuthkeysForConsole();
+        } catch (IOException | JSONException e) {
+            return;
+        }
+    }
+}
+
+class BasicAuthInterceptor implements Interceptor {
+    String credentials;
+
+    public BasicAuthInterceptor (String user, String password) {
+        this.credentials = Credentials.basic(user, password);
+    }
+
+    @Override
+    public okhttp3.Response intercept (Chain chain) throws IOException {
+        okhttp3.Request request = chain.request();
+
+        okhttp3.Request authenticatedRequest = request.newBuilder()
+                .header("Authorization", credentials).build();
+        return chain.proceed(authenticatedRequest);
     }
 }
 
@@ -558,11 +653,6 @@ class Bindings {
         obj.put ("ramUsage", serverStats.ramUsage(expressServer.pluginGlobal));
 
         res.send(obj.toString());
-    }
-
-    @DynExpress(context = "/ISWORKING") // Both defined
-    public void getISWORKING(Request req, Response res) {
-        res.send("Returns info that server is working or not");
     }
 
     @DynExpress(context = "/LOGIN", method = RequestMethod.POST)

@@ -1,11 +1,18 @@
 package org.mcadminToolkit.auth;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import okhttp3.MediaType;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+import org.json.JSONObject;
+import org.mcadminToolkit.expressServer;
 import org.mcadminToolkit.sqlHandler.authKeyChecker;
 import org.mcadminToolkit.sqlHandler.sqlConnector;
 import org.springframework.security.crypto.bcrypt.*;
@@ -62,7 +69,33 @@ public class session {
             return sessionKey;
         }
 
-        throw new CreateSessionException();
+        MediaType JSON = MediaType.get("application/json; charset=utf-8");
+
+        RequestBody body = RequestBody.create("{\"authkey\": \"" + authKey + "\"}", JSON);
+
+        Request request = new Request.Builder()
+                .url(expressServer.baseUrl + "/checkAuthkey")
+                .post(body)
+                .build();
+
+        String jsonText = "";
+
+        try (Response response = expressServer.client.newCall(request).execute()) {
+            jsonText = response.body().string();
+        } catch (IOException e) {
+            throw new CreateSessionException();
+        }
+
+        JSONObject jsonObject = new JSONObject(jsonText);
+
+        if (jsonObject.has("error")) {
+            throw new CreateSessionException();
+        }
+
+        String sessionKey = UUID.randomUUID().toString();
+        session newSession = new session(authKey, sessionKey, Date.from(new Date().toInstant().plus(Duration.ofHours(1))), jsonObject.getInt("secLvl"));
+        activeSessions.add(newSession);
+        return sessionKey;
     }
 
     public static void extendSession (int sessionIndex) throws NoSessionException {

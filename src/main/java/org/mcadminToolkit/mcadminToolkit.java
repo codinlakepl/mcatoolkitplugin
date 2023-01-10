@@ -2,6 +2,7 @@ package org.mcadminToolkit;
 
 import jdk.nashorn.internal.parser.JSONParser;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.mcadminToolkit.sqlHandler.*;
 
@@ -43,6 +44,11 @@ public final class mcadminToolkit extends JavaPlugin {
         if (!configFile.exists()) {
             JSONObject config = new JSONObject();
             config.put("port", 4096);
+            config.put("address", "");
+            JSONObject consoleConfig = new JSONObject();
+            consoleConfig.put("password", "");
+            consoleConfig.put("email", "");
+            config.put("consoleLogin", consoleConfig);
 
             try {
                 configFile.createNewFile();
@@ -62,14 +68,22 @@ public final class mcadminToolkit extends JavaPlugin {
         }
 
         int port = 0;
+        String address = "";
+        String consoleEmail = "";
+        String consolePassword = "";
 
         try {
             String configText = new String(Files.readAllBytes(Paths.get("./plugins/MCAdmin-Toolkit-Connector/config.json")), StandardCharsets.UTF_8);
 
             JSONObject config = new JSONObject(configText);
             port = config.getInt("port");
+            address = config.getString("address");
+
+            JSONObject consoleConfig = config.getJSONObject("consoleLogin");
+            consoleEmail = consoleConfig.getString("email");
+            consolePassword = consoleConfig.getString("password");
         } catch (IOException e) {
-            getLogger().info("Can't read to config file");
+            getLogger().info("Can't read the config file");
             System.exit(1);
         }
 
@@ -88,7 +102,12 @@ public final class mcadminToolkit extends JavaPlugin {
             sqlStructureConstructor.checkStructure(con);
             //express init
             JavaPlugin plugin = mcadminToolkit.getPlugin(mcadminToolkit.class);
-            expressServer.initializeServer(plugin, con, port);
+            expressServer.initializeServer(plugin, con, port, address, consoleEmail, consolePassword);
+            try {
+                expressServer.generateAuthkeysForConsole();
+            } catch (IOException | JSONException e) {
+                getLogger().info("Can't connect to console, check your login credentials");
+            }
         }catch (Exception e) {
             System.out.println(e);
         }
