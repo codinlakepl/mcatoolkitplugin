@@ -4,7 +4,9 @@ import jdk.nashorn.internal.parser.JSONParser;
 import okhttp3.MediaType;
 import okhttp3.Request;
 import okhttp3.RequestBody;
+import okhttp3.Response;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.json.JSONException;
@@ -71,7 +73,10 @@ public final class mcadminToolkit extends JavaPlugin {
                 getLogger().info("Can't write to config file");
                 System.exit(1);
             }
+
         }
+
+
 
         int port = 0;
         String address = "";
@@ -109,35 +114,29 @@ public final class mcadminToolkit extends JavaPlugin {
             //express init
             JavaPlugin plugin = mcadminToolkit.getPlugin(mcadminToolkit.class);
             expressServer.initializeServer(plugin, con, port, address, consoleEmail, consolePassword);
-            try {
-                expressServer.generateAuthkeysForConsole();
-            } catch (IOException | JSONException e) {
-                getLogger().info("Can't connect to console, check your login credentials");
-            }
         }catch (Exception e) {
             System.out.println(e);
         }
-    }
 
-    @EventHandler
-    public void onCommandPreprocess (PlayerCommandPreprocessEvent event) {
-        if (expressServer.client == null) return;
+        try {
+            expressServer.generateAuthkeysForConsole();
+        } catch (IOException | JSONException e) {
+            getLogger().info("Can't connect to console, check your login credentials");
+        }
 
-        String message = event.getMessage();
+        getServer().getPluginManager().registerEvents(new CommandListener(), this);
 
-        String[] array = message.split(" ");
+        getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
+            @Override
+            public void run() {
+                if (expressServer.client == null) return;
 
-        if (array.length >= 2) {
-            if (array[0].equalsIgnoreCase("/ban") || array[0].equalsIgnoreCase("ban") ||
-            array[0].equalsIgnoreCase("/ban-ip") || array[0].equalsIgnoreCase("ban-ip")) {
                 MediaType JSON = MediaType.get ("application/json; charset=utf-8");
 
                 JSONObject jsonObject = new JSONObject();
 
-                String player = event.getPlayer().getName();
-
-                jsonObject.put("user", player);
-                jsonObject.put("log", "Attempt to ban player " + array[1]);
+                jsonObject.put("user", "SERVER");
+                jsonObject.put("log", "Server started");
                 jsonObject.put("sendPush", true);
 
                 RequestBody body = RequestBody.create(jsonObject.toString(), JSON);
@@ -149,9 +148,9 @@ public final class mcadminToolkit extends JavaPlugin {
                 try {
                     expressServer.client.newCall(request).execute();
                 } catch (IOException e) {
-                    return;
                 }
             }
-        }
+        });
     }
+
 }

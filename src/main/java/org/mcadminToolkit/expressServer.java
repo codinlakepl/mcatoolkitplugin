@@ -153,10 +153,10 @@ public class expressServer {
                 .post(body)
                 .build();
 
-        okhttp3.Response response = client.newCall(setNewAuthkeysRequest).execute ();
-
-        if (new JSONObject(response.body().string()).has("error")) {
-            throw new IOException();
+        try (okhttp3.Response response = client.newCall(setNewAuthkeysRequest).execute ()) {
+            if (new JSONObject(response.body().string()).has("error")) {
+                throw new IOException();
+            }
         }
     }
 }
@@ -211,6 +211,33 @@ class Bindings {
         }
 
         return true;
+    }
+
+    void sendLog (String log, boolean sendPush) {
+
+        if (expressServer.client == null) {
+            return;
+        }
+
+        MediaType JSON = MediaType.get ("application/json; charset=utf-8");
+
+        JSONObject jsonObject = new JSONObject();
+
+        jsonObject.put("user", "APP");
+        jsonObject.put("log", log);
+        jsonObject.put("sendPush", sendPush);
+
+        RequestBody body = RequestBody.create(jsonObject.toString(), JSON);
+        okhttp3.Request request = new okhttp3.Request.Builder()
+                .url (expressServer.baseUrl + "/addLog")
+                .post(body)
+                .build();
+
+        try {
+            expressServer.client.newCall(request).execute();
+        } catch (IOException e) {
+            return;
+        }
     }
 
     @DynExpress() // Default is context="/" and method=RequestMethod.GET
@@ -353,6 +380,8 @@ class Bindings {
         try {
             ban.ban(expressServer.pluginGlobal, username, reason, Date.from(new Date().toInstant().plus(Duration.ofHours(hours))));
 
+            sendLog("Banned player " + username, false);
+
             res.send("Success");
         } catch (Exception e) {
             res.send(e.getMessage());
@@ -390,6 +419,8 @@ class Bindings {
         try {
             ban.banIp(expressServer.pluginGlobal, playerName, reason);
 
+            sendLog("Banned player " + playerName, false);
+
             res.send("Success");
         } catch (Exception e) {
             res.send(e.getMessage());
@@ -425,6 +456,8 @@ class Bindings {
         try {
             ban.unban(expressServer.pluginGlobal, username);
 
+            sendLog("Unbanned player " + username, false);
+
             res.send("Success");
         } catch (Exception e) {
             res.send(e.getMessage());
@@ -456,6 +489,8 @@ class Bindings {
 
         try {
             ban.unbanIp(expressServer.pluginGlobal, ip);
+
+            sendLog("Unbanned player " + ip, false);
 
             res.send("Success");
         } catch (Exception e) {
@@ -492,6 +527,9 @@ class Bindings {
         try{
             //ban.ban(expressServer.pluginGlobal, body, "TEST", Date.from(Instant.now()));
             kick.kick(expressServer.pluginGlobal, username, reason);
+
+            sendLog("Kicked player " + username, false);
+
             res.send("Success");
         }catch (Exception e){
             res.send(e.toString());
@@ -520,6 +558,8 @@ class Bindings {
         try {
             output = whitelist.enableWhitelist(expressServer.pluginGlobal);
 
+            sendLog("Whitelist enabled", false);
+
             res.send(output);
         } catch (Exception e) {
             res.send(e.getMessage());
@@ -547,6 +587,8 @@ class Bindings {
 
         try {
             output = whitelist.disableWhitelist(expressServer.pluginGlobal);
+
+            sendLog("Whitelist disabled", false);
 
             res.send(output);
         } catch (Exception e) {
@@ -585,6 +627,8 @@ class Bindings {
         try {
             output = whitelist.addWhitelistPlayer(expressServer.pluginGlobal, username);
 
+            sendLog("Player " + username + " added to whitelist", false);
+
             res.send(output);
         } catch (Exception e) {
             res.send(e.getMessage());
@@ -621,6 +665,8 @@ class Bindings {
 
         try {
             output = whitelist.removeWhitelistPlayer(expressServer.pluginGlobal, username);
+
+            sendLog("Player " + username + " removed from whitelist", false);
 
             res.send(output);
         } catch (Exception e) {
