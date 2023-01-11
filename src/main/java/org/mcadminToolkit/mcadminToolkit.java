@@ -1,6 +1,11 @@
 package org.mcadminToolkit;
 
 import jdk.nashorn.internal.parser.JSONParser;
+import okhttp3.MediaType;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -32,6 +37,7 @@ public final class mcadminToolkit extends JavaPlugin {
         /*this.getCommand("test").setExecutor(new testCommand());
         this.getCommand("whitelistGet").setExecutor(new whitelistGetCommand());*/
         this.getCommand("createAuthKey").setExecutor(new createAuthKeyCommand());
+        this.getCommand ("regenerateConsoleAuthkeys").setExecutor(new regenerateConsoleAuthkeysCommand());
 
         File catalog = new File ("./plugins/MCAdmin-Toolkit-Connector");
 
@@ -110,6 +116,42 @@ public final class mcadminToolkit extends JavaPlugin {
             }
         }catch (Exception e) {
             System.out.println(e);
+        }
+    }
+
+    @EventHandler
+    public void onCommandPreprocess (PlayerCommandPreprocessEvent event) {
+        if (expressServer.client == null) return;
+
+        String message = event.getMessage();
+
+        String[] array = message.split(" ");
+
+        if (array.length >= 2) {
+            if (array[0].equalsIgnoreCase("/ban") || array[0].equalsIgnoreCase("ban") ||
+            array[0].equalsIgnoreCase("/ban-ip") || array[0].equalsIgnoreCase("ban-ip")) {
+                MediaType JSON = MediaType.get ("application/json; charset=utf-8");
+
+                JSONObject jsonObject = new JSONObject();
+
+                String player = event.getPlayer().getName();
+
+                jsonObject.put("user", player);
+                jsonObject.put("log", "Attempt to ban player " + array[1]);
+                jsonObject.put("sendPush", true);
+
+                RequestBody body = RequestBody.create(jsonObject.toString(), JSON);
+                Request request = new Request.Builder()
+                        .url (expressServer.baseUrl + "/addLog")
+                        .post(body)
+                        .build();
+
+                try {
+                    expressServer.client.newCall(request).execute();
+                } catch (IOException e) {
+                    return;
+                }
+            }
         }
     }
 }

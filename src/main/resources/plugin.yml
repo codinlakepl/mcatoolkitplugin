@@ -6,3 +6,6 @@ commands:
   createAuthKey:
     description: Creates auth key and gives you a download code for it
     usage: /<command> <secLvl>
+  regenerateConsoleAuthkeys:
+    description: Generates set of auth keys, and sends them to console if connection is properly configured, otherwise returns error and removes generated auth keys
+    usage: /<command>
