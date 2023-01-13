@@ -12,15 +12,14 @@ import express.http.request.Request;
 import express.http.response.Response;
 
 import javax.imageio.ImageIO;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.X509ExtendedKeyManager;
-import javax.net.ssl.X509ExtendedTrustManager;
+import javax.net.ssl.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.security.Security;
+import java.security.cert.CertificateException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -68,7 +67,7 @@ public class expressServer {
     public static String serverAddress;
     public static int serverPort = 0;
 
-    public static String baseUrl = "http://127.0.0.1:3000";
+    public static String baseUrl = "https://127.0.0.1:3000";
 
     public static void initializeServer(JavaPlugin plugin, Connection con, int port, String address, String consoleEmail, String consolePassword) {
 
@@ -80,9 +79,47 @@ public class expressServer {
         // x4wSkjCq29hwFSJ1PWqdDqGCcsHsyy
 
         if (!consoleEmail.equals("") || !consolePassword.equals("")) {
-            client = new OkHttpClient.Builder()
-                    .addInterceptor(new BasicAuthInterceptor(consoleEmail, consolePassword))
-                    .build();
+
+            try {
+                final TrustManager[] trustAllCerts = new TrustManager[]{
+                        new X509TrustManager() {
+
+                            @Override
+                            public void checkClientTrusted(java.security.cert.X509Certificate[] chain,
+                                                           String authType) throws
+                                    CertificateException {
+                            }
+
+                            @Override
+                            public void checkServerTrusted(java.security.cert.X509Certificate[] chain,
+                                                           String authType) throws
+                                    CertificateException {
+                            }
+                            @Override
+                            public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                                return new java.security.cert.X509Certificate[]{};
+                            }
+                        }
+                };
+
+                final SSLContext sslContext = SSLContext.getInstance("SSL");
+                sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+
+                final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+
+                client = new OkHttpClient.Builder()
+                        .addInterceptor(new BasicAuthInterceptor(consoleEmail, consolePassword))
+                        .sslSocketFactory(sslSocketFactory, (X509TrustManager) trustAllCerts[0])
+                        .hostnameVerifier(new HostnameVerifier() {
+                            @Override
+                            public boolean verify(String hostname, SSLSession session) {
+                                return true;
+                            }
+                        })
+                        .build();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
         //Path cert = new File("cert.pem").toPath();
         //Path key = new File("key.pem").toPath();
