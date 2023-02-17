@@ -67,7 +67,7 @@ public class expressServer {
     public static String serverAddress;
     public static int serverPort = 0;
 
-    public static String baseUrl = "https://mcadmin.me";
+    public static String baseUrl = "https://127.0.0.1"; //https://mcadmin.me
 
     public static void initializeServer(JavaPlugin plugin, Connection con, int port, String address, String consoleEmail, String consolePassword) {
 

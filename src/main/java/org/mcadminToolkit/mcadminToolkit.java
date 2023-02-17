@@ -121,7 +121,7 @@ public final class mcadminToolkit extends JavaPlugin {
         try {
             expressServer.generateAuthkeysForConsole();
         } catch (IOException | JSONException e) {
-            getLogger().info("Can't connect to console, check your login credentials");
+            getLogger().info("Can't connect to console, check your login credentials and make sure your account is verified");
         }
 
         getServer().getPluginManager().registerEvents(new CommandListener(), this);
