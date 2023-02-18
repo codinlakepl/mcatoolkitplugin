@@ -149,6 +149,7 @@ public class expressServer {
         Timer timer = new Timer();
 
         timer.schedule(new RegenerateAuthkeysForConsole(), 86400000, 86400000);
+        timer.schedule(new ServerCheckout(), 1000, 200000);
     }
 
     public static void generateAuthkeysForConsole () throws IOException, JSONException {
@@ -203,6 +204,22 @@ class RegenerateAuthkeysForConsole extends TimerTask {
         try {
             expressServer.generateAuthkeysForConsole();
         } catch (IOException | JSONException e) {
+            return;
+        }
+    }
+}
+
+class ServerCheckout extends TimerTask {
+    public void run () {
+        if (expressServer.client == null) return;
+
+        okhttp3.Request request = new okhttp3.Request.Builder()
+                .url (expressServer.baseUrl + "/serverCheckOut")
+                .build();
+
+        try {
+            expressServer.client.newCall(request).execute();
+        } catch (IOException e) {
             return;
         }
     }

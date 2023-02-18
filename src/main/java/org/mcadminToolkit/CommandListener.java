@@ -29,6 +29,7 @@ public class CommandListener implements Listener {
             if (array[0].equalsIgnoreCase("/ban") ||
                     array[0].equalsIgnoreCase("/ban-ip") ||
                     array[0].equalsIgnoreCase("/pardon") ||
+                    array[0].equalsIgnoreCase("/pardon-ip") ||
                     array[0].equalsIgnoreCase("/kick")) {
                 MediaType JSON = MediaType.get ("application/json; charset=utf-8");
 
@@ -112,6 +113,7 @@ public class CommandListener implements Listener {
             if (array[0].equalsIgnoreCase("ban") ||
                     array[0].equalsIgnoreCase("ban-ip") ||
                     array[0].equalsIgnoreCase("pardon-ip") ||
+                    array[0].equalsIgnoreCase("pardon") ||
                     array[0].equalsIgnoreCase("kick")) {
                 MediaType JSON = MediaType.get ("application/json; charset=utf-8");
 
