@@ -6,7 +6,7 @@
 
     <groupId>org.mcadminToolkit</groupId>
     <artifactId>bukkit-backend</artifactId>
-    <version>2022-12-12-prealpha-1</version>
+    <version>2023-02-19-alpha-1</version>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
