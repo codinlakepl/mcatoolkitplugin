@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.mcadminToolkit</groupId>
   <artifactId>bukkit-backend</artifactId>
-  <version>2023-02-19-alpha-1</version>
+  <version>2023-04-16-alpha-1</version>
   <build>
     <resources>
       <resource>

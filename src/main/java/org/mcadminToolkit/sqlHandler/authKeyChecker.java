@@ -20,8 +20,12 @@ public class authKeyChecker {
             statement.setQueryTimeout(30);
             results = statement.executeQuery("SELECT * FROM authkeys");
             do {
-                if (BCrypt.checkpw(uuid, results.getString("authKey"))) {
-                    return new account(results.getString("authKey"), results.getInt("secLvl"));
+                try {
+                    if (BCrypt.checkpw(uuid, results.getString("authKey"))) {
+                        return new account(results.getString("authKey"), results.getInt("secLvl"));
+                    }
+                } catch (Exception e) {
+                    break;
                 }
             } while (results.next());
 

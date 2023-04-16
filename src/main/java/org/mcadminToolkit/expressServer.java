@@ -1,9 +1,7 @@
 package org.mcadminToolkit;
 
-import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpsConfigurator;
 import nl.altindag.ssl.SSLFactory;
-import nl.altindag.ssl.util.IOUtils;
 import nl.altindag.ssl.util.PemUtils;
 import express.DynExpress;
 import express.Express;
@@ -15,25 +13,15 @@ import javax.imageio.ImageIO;
 import javax.net.ssl.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.security.Security;
 import java.security.cert.CertificateException;
 import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.*;
 
 import okhttp3.*;
-import org.bouncycastle.mime.encoding.Base64OutputStream;
-import org.bouncycastle.util.encoders.Base64;
-import org.bouncycastle.util.encoders.Base64Encoder;
 import org.bukkit.Server;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.util.CachedServerIcon;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -47,14 +35,9 @@ import org.mcadminToolkit.playerslist.offlineplayerslist;
 import org.mcadminToolkit.playerslist.playerInfo;
 import org.mcadminToolkit.playerslist.playerslist;
 import org.mcadminToolkit.serverStats.serverStats;
-import org.mcadminToolkit.sqlHandler.sqlConnector;
-import org.mcadminToolkit.sqlHandler.sqlStructureConstructor;
 
 import org.mcadminToolkit.playermanagement.ban;
 import org.mcadminToolkit.whitelist.whitelist;
-
-import org.mcadminToolkit.sqlHandler.*;
-import sun.misc.BASE64Encoder;
 
 import static org.mcadminToolkit.express.utils.middleware.Middleware.cors;
 
@@ -776,9 +759,7 @@ class Bindings {
                 ByteArrayOutputStream os = new ByteArrayOutputStream();
                 ImageIO.write(img, "png", os);
 
-                BASE64Encoder encoder = new BASE64Encoder();
-
-                b64Img = encoder.encode(os.toByteArray());
+                b64Img = Base64.getEncoder().encodeToString(os.toByteArray());
             } catch (IOException e) {
                 b64Img = "none";
             }
