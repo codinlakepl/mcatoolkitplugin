@@ -5,6 +5,9 @@ import org.bukkit.Server;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.Date;
 import java.util.UUID;
 
@@ -30,7 +33,9 @@ public class ban {
 
         for (Player player : players) {
             if (player.getName().equals(playerName)) {
-                server.banIP(player.getAddress().toString());
+                InetAddress inetAddress = player.getAddress().getAddress();
+
+                server.banIP(inetAddress.getHostAddress());
                 kick.kick(plugin, player.getName(), reason + "\nautokick after ban");
                 break;
             }

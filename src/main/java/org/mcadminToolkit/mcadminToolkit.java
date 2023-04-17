@@ -47,8 +47,9 @@ public final class mcadminToolkit extends JavaPlugin {
             try {
                 configFile.createNewFile();
             } catch (IOException e) {
-                getLogger().info("Can't create config file");
-                System.exit(1);
+                getLogger().warning("Can't create config file");
+                getLogger().warning("Can't start https server - plugin won't work");
+                return;
             }
 
             try {
@@ -56,8 +57,9 @@ public final class mcadminToolkit extends JavaPlugin {
                 configWriter.write(config.toString());
                 configWriter.close();
             } catch (IOException e) {
-                getLogger().info("Can't write to config file");
-                System.exit(1);
+                getLogger().warning("Can't write to config file");
+                getLogger().warning("Can't start https server - plugin won't work");
+                return;
             }
         }
 
@@ -69,16 +71,19 @@ public final class mcadminToolkit extends JavaPlugin {
             JSONObject config = new JSONObject(configText);
             port = config.getInt("port");
         } catch (IOException e) {
-            getLogger().info("Can't read to config file");
-            System.exit(1);
+            getLogger().warning("Can't read to config file");
+            getLogger().warning("Can't start https server - plugin won't work");
+            return;
         }
 
         File certFile = new File ("./plugins/MCAdmin-Toolkit-Connector/rootCA.crt");
         File keyFile = new File("./plugins/MCAdmin-Toolkit-Connector/rootCA.key");
 
         if (!certFile.exists() || !keyFile.exists()) {
-            getLogger().info("Can't get cert files");
-            System.exit(1);
+            getLogger().warning("Can't get cert files");
+            getLogger().warning("Please create cert files and restart server");
+            getLogger().warning("Can't start https server - plugin won't work");
+            return;
         }
 
         //db init

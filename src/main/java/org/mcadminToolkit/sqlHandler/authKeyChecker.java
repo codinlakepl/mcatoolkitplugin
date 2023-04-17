@@ -19,11 +19,13 @@ public class authKeyChecker {
             statement = con.createStatement();
             statement.setQueryTimeout(30);
             results = statement.executeQuery("SELECT * FROM authkeys");
-            do {
+
+            // Here was do while, but I have ridden the documentation and I am sure that I am fucking stupid as fuck XD
+            while (results.next()) {
                 if (BCrypt.checkpw(uuid, results.getString("authKey"))) {
                     return new account(results.getString("authKey"), results.getInt("secLvl"));
                 }
-            } while (results.next());
+            }
 
             if (results.getFetchSize() < 1) return null;
 
