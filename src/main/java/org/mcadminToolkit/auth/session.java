@@ -15,26 +15,39 @@ public class session {
     public String sessionKey;
     public Date expirationDate;
     public int secLevel;
+    public String label;
 
-    public session (String authKey, String sessionKey, Date expirationDate, int secLevel) {
+    public session (String authKey, String sessionKey, String label, Date expirationDate, int secLevel) {
         this.authKey = authKey;
         this.sessionKey = BCrypt.hashpw(sessionKey, BCrypt.gensalt());
         this.expirationDate = expirationDate;
         this.secLevel = secLevel;
+        this.label = label;
     }
 
     public static List<session> activeSessions = new ArrayList<session>();
 
     public static int isSessionActive (int sessionIndex) throws SessionExpirationException {
 
-        int secLvl = activeSessions.get(sessionIndex).secLevel;
-
         if (activeSessions.get(sessionIndex).expirationDate.getTime() < new Date().getTime()) {
             activeSessions.remove(sessionIndex);
             throw new SessionExpirationException();
         }
 
+        int secLvl = activeSessions.get(sessionIndex).secLevel;
+
         return secLvl;
+    }
+
+    public static String getSessionLabel (int sessionIndex) throws SessionExpirationException {
+        if (activeSessions.get(sessionIndex).expirationDate.getTime() < new Date().getTime()) {
+            activeSessions.remove(sessionIndex);
+            throw new SessionExpirationException();
+        }
+
+        String label = activeSessions.get (sessionIndex).label;
+
+        return label;
     }
 
     /*public static void validateSession (int sessionIndex, String sessionKey) throws InvalidSessionException {
@@ -57,7 +70,7 @@ public class session {
 
         if (acc != null/*authKey.equals("DUPA")*/) {
             String sessionKey = UUID.randomUUID().toString();
-            session newSession = new session(authKey, sessionKey, Date.from(new Date().toInstant().plus(Duration.ofHours(1))), acc.secLevel);
+            session newSession = new session(authKey, sessionKey, acc.label, Date.from(new Date().toInstant().plus(Duration.ofHours(1))), acc.secLevel);
             activeSessions.add(newSession);
             return sessionKey;
         }

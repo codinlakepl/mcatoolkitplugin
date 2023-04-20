@@ -15,10 +15,19 @@ public class sqlStructureConstructor {
 
             statement.executeUpdate("create table\n" +
                     "  `authkeys` (\n" +
-                    "    `id` integer not null primary key autoincrement,\n" +
+                    "    `id` INTEGER not null primary key autoincrement,\n" +
                     "    `authKey` TEXT null,\n" +
                     "    `secLvl` INT null,\n" +
-                    "    `created_at` datetime not null default CURRENT_TIMESTAMP\n" +
+                    "    `label` TEXT null,\n" +
+                    "    `created_at` DATETIME not null default CURRENT_TIMESTAMP\n" +
+                    "  )");
+            statement.executeUpdate("CREATE TABLE\n" +
+                    "  `logs` (\n" +
+                    "    `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\n" +
+                    "    `source` VARCHAR(50) NULL,\n" +
+                    "    `issuer` TEXT NULL,\n" +
+                    "    `issueTime` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\n" +
+                    "    `message` TEXT NULL\n" +
                     "  )");
         } catch (SQLException e) {
             System.err.println(e.getMessage());

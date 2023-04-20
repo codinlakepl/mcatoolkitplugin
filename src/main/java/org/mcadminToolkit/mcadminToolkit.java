@@ -15,6 +15,10 @@ import java.sql.SQLException;
 
 public final class mcadminToolkit extends JavaPlugin {
     public JavaPlugin plugin = this;
+
+    public static JSONObject commandLogging;
+    public static JSONObject appLogging;
+
     @Override
     public void onLoad () {
         getLogger().info("MCAdmin Toolkit Connector successfully loaded");
@@ -31,6 +35,8 @@ public final class mcadminToolkit extends JavaPlugin {
         /*this.getCommand("test").setExecutor(new testCommand());
         this.getCommand("whitelistGet").setExecutor(new whitelistGetCommand());*/
         this.getCommand("createAuthKey").setExecutor(new createAuthKeyCommand());
+        this.getCommand("listAuthKeys").setExecutor(new listAuthKeysCommand());
+        this.getCommand("removeAuthKey").setExecutor(new removeAuthKeyCommand());
 
         File catalog = new File ("./plugins/MCAdmin-Toolkit-Connector");
 
@@ -41,8 +47,7 @@ public final class mcadminToolkit extends JavaPlugin {
         File configFile = new File ("./plugins/MCAdmin-Toolkit-Connector/config.json");
 
         if (!configFile.exists()) {
-            JSONObject config = new JSONObject();
-            config.put("port", 4096);
+            String config = configBuilder.build();
 
             try {
                 configFile.createNewFile();
@@ -54,7 +59,7 @@ public final class mcadminToolkit extends JavaPlugin {
 
             try {
                 FileWriter configWriter = new FileWriter(configFile);
-                configWriter.write(config.toString());
+                configWriter.write(config);
                 configWriter.close();
             } catch (IOException e) {
                 getLogger().warning("Can't write to config file");
@@ -70,6 +75,9 @@ public final class mcadminToolkit extends JavaPlugin {
 
             JSONObject config = new JSONObject(configText);
             port = config.getInt("port");
+
+            commandLogging = config.getJSONObject("commandLogging");
+            appLogging = config.getJSONObject("appLogging");
         } catch (IOException e) {
             getLogger().warning("Can't read to config file");
             getLogger().warning("Can't start https server - plugin won't work");

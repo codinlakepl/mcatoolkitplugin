@@ -4,7 +4,6 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.mcadminToolkit.serverStats.serverStats;
 import org.mcadminToolkit.sqlHandler.AuthKeyRegistrationException;
 import org.mcadminToolkit.sqlHandler.authKeyRegistration;
 import org.mcadminToolkit.sqlHandler.sqlConnector;
@@ -21,19 +20,18 @@ public class createAuthKeyCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String s, String[] args) {
-        JavaPlugin plugin = mcadminToolkit.getPlugin(mcadminToolkit.class);
-        //String[] whitelistArray = whitelist.getWhiteList(plugin);
-
         if (!sender.isOp()) {
             sender.sendMessage("You must be op to perform this command");
             return false;
         }
 
-        if (args.length < 1) {
-            sender.sendMessage ("Please specify security level");
+        if (args.length < 2) {
+            sender.sendMessage ("Please specify security level and label");
             return false;
         }
+
         int secLvl;
+
         try {
             secLvl = Integer.parseInt(args[0]);
             if (!(secLvl >= 1 && secLvl <= 6)) {
@@ -44,8 +42,11 @@ public class createAuthKeyCommand implements CommandExecutor {
             sender.sendMessage("Security level must be a number");
             return false;
         }
+
+        String label = args[1];
+
         try {
-            String authKey = authKeyRegistration.registerNewAuthKey(sqlConnector.connection, secLvl);
+            String authKey = authKeyRegistration.registerNewAuthKey(sqlConnector.connection, secLvl, label);
             String code = "";
 
             String alphabet = "abcdefghijklmnoprstquwxyzABCDEFGHJIKLMNOPRSTQUWXYZ1234567890";
@@ -62,12 +63,14 @@ public class createAuthKeyCommand implements CommandExecutor {
 
             sender.sendMessage("Successfully generated auth key.\nThis is code to download it in MC-Admin-Toolkit application:\n" + code + "\nIt will resist 5 minutes");
         } catch (AuthKeyRegistrationException e) {
+            sender.sendMessage("An error occurred");
             return false;
         }
         return true;
     }
 }
 
+// After 5 minutes removes opportunity to download freshly created auth key
 class authKeyRemover extends TimerTask {
     public authKeyRemover () {}
 
