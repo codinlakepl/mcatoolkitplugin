@@ -6,8 +6,8 @@ public class configBuilder {
         String field = "";
 
         field += "        \"" + command + "\": {";
-        field += "            \"log\": \"" + (shouldLog ? "true" : "false") + "\", ";
-        field += "            \"push\": " + (shouldSendPush ? "true" : "false") + "}";
+        field += "\"log\": \"" + (shouldLog ? "true" : "false") + "\", ";
+        field += "\"push\": " + (shouldSendPush ? "true" : "false") + "}";
 
         return field;
     }
