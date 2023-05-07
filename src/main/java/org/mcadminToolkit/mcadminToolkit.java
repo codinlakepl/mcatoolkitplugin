@@ -105,5 +105,7 @@ public final class mcadminToolkit extends JavaPlugin {
         }catch (Exception e) {
             System.out.println(e);
         }
+
+        getServer().getPluginManager().registerEvents(new commandListener(), this);
     }
 }
