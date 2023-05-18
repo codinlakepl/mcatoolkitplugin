@@ -1,6 +1,9 @@
 package org.mcadminToolkit;
 
 import jdk.nashorn.internal.parser.JSONParser;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.json.JSONObject;
 import org.mcadminToolkit.sqlHandler.*;
