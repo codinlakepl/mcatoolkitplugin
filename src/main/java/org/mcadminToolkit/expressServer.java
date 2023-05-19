@@ -644,6 +644,21 @@ class Bindings {
         obj.put ("playersOnline", serverStats.playersOnline(expressServer.pluginGlobal));
         obj.put ("ramUsage", serverStats.ramUsage(expressServer.pluginGlobal));
 
+        String[] logs;
+        try {
+            logs = logger.getLast10Logs(expressServer.conGlobal);
+        } catch (LoggingException e) {
+            throw new RuntimeException(e);
+        }
+
+        JSONArray arr = new JSONArray();
+
+        for (int i = 0; i < logs.length; i++) {
+            arr.put(logs[i]);
+        }
+
+        obj.put ("logs", arr);
+
         res.send(obj.toString());
     }
 

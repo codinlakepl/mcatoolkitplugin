@@ -29,6 +29,11 @@ public class sqlStructureConstructor {
                     "    `issueTime` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\n" +
                     "    `message` TEXT NULL\n" +
                     "  )");
+            statement.executeUpdate("CREATE TABLE\n" +
+                    "  `workCheckers` (\n" +
+                    "    `id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,\n" +
+                    "    `executionTime` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP\n" +
+                    "  )");
         } catch (SQLException e) {
             System.err.println(e.getMessage());
             System.err.println("SQLITE doesn't work, try manually deleting db file");

@@ -13,8 +13,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.Connection;
-import java.sql.SQLException;
+import java.sql.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public final class mcadminToolkit extends JavaPlugin {
     public JavaPlugin plugin = this;
@@ -98,7 +101,7 @@ public final class mcadminToolkit extends JavaPlugin {
         }
 
         //db init
-        Connection con;
+        Connection con = null;
         try{
             con = sqlConnector.connect("database.db");
             sqlStructureConstructor.checkStructure(con);
@@ -110,5 +113,73 @@ public final class mcadminToolkit extends JavaPlugin {
         }
 
         getServer().getPluginManager().registerEvents(new commandListener(), this);
+
+        Connection finalCon = con;
+        getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
+            @Override
+            public void run() {
+                Statement statement;
+
+                try {
+                    statement = finalCon.createStatement();
+                    statement.setQueryTimeout(30);
+
+                    ResultSet lastExecutionTime = statement.executeQuery("SELECT\n" +
+                            "  *\n" +
+                            "FROM\n" +
+                            "  `workCheckers`\n" +
+                            "ORDER BY\n" +
+                            "  `executionTime` DESC\n" +
+                            "LIMIT 1");
+
+                    if (lastExecutionTime.next()) {
+                        DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+                        Date date = lastExecutionTime.getDate("executionTime");
+                        org.mcadminToolkit.sqlHandler.logger.createLog(finalCon, org.mcadminToolkit.sqlHandler.logger.Sources.SYSTEM, "SYSTEM", "Server crushed on " + df.format(date));
+                    }
+
+                    org.mcadminToolkit.sqlHandler.logger.createLog(finalCon, org.mcadminToolkit.sqlHandler.logger.Sources.SYSTEM, "SYSTEM", "Server started");
+                } catch (LoggingException e) {
+                    throw new RuntimeException(e);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+
+                Timer timer = new Timer();
+
+                timer.schedule(new SaveExecutionTime(), 10000, 10000);
+            }
+        });
+    }
+}
+
+class SaveExecutionTime extends TimerTask {
+    public void run () {
+        Connection con = expressServer.conGlobal;
+
+        Statement statement;
+        PreparedStatement preparedStatement;
+        try {
+            statement = con.createStatement();
+            statement.setQueryTimeout(30);
+
+            statement.executeUpdate("INSERT INTO workCheckers DEFAULT VALUES");
+
+            ResultSet rs = statement.executeQuery("SELECT count(*) AS numberOfRows FROM workCheckers");
+
+            if (rs.next()) {
+
+                int numberOfRows = rs.getInt("numberOfRows");
+
+                if (numberOfRows > 3) {
+                    statement.executeUpdate("DELETE FROM workCheckers WHERE id IN (\n" +
+                            "  SELECT id FROM workCheckers ORDER BY executionTime ASC LIMIT " + (numberOfRows - 1) + "\n" +
+                            ")");
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
