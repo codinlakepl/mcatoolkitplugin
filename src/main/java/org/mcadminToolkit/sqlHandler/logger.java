@@ -2,11 +2,11 @@ package org.mcadminToolkit.sqlHandler;
 
 import java.sql.*;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 public class logger {
     public enum Sources {
@@ -52,7 +52,9 @@ public class logger {
             while (rs.next()) {
                 DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-                Date date = rs.getDate("issueTime");
+                //Date date = rs.getDate("issueTime");
+
+                Date date = df.parse(rs.getString("issueTime"));
 
                 String issueTime = df.format(date);
                 String source = rs.getString("source");
@@ -67,6 +69,8 @@ public class logger {
             return logs.toArray(new String[0]);
         } catch (SQLException e) {
             throw new LoggingException(e.getMessage());
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
         }
     }
 }

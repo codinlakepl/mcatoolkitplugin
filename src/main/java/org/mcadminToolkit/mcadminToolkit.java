@@ -1,9 +1,5 @@
 package org.mcadminToolkit;
 
-import jdk.nashorn.internal.parser.JSONParser;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
-import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.json.JSONObject;
 import org.mcadminToolkit.sqlHandler.*;
@@ -11,11 +7,12 @@ import org.mcadminToolkit.sqlHandler.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.*;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -135,14 +132,17 @@ public final class mcadminToolkit extends JavaPlugin {
                     if (lastExecutionTime.next()) {
                         DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-                        Date date = lastExecutionTime.getDate("executionTime");
-                        org.mcadminToolkit.sqlHandler.logger.createLog(finalCon, org.mcadminToolkit.sqlHandler.logger.Sources.SYSTEM, "SYSTEM", "Server crushed on " + df.format(date));
+                        //Date date = lastExecutionTime.getDate("executionTime");
+                        Date date = df.parse(lastExecutionTime.getString("executionTime"));
+                        org.mcadminToolkit.sqlHandler.logger.createLog(finalCon, org.mcadminToolkit.sqlHandler.logger.Sources.SYSTEM, "SYSTEM", "Server stopped on " + df.format(date));
                     }
 
                     org.mcadminToolkit.sqlHandler.logger.createLog(finalCon, org.mcadminToolkit.sqlHandler.logger.Sources.SYSTEM, "SYSTEM", "Server started");
                 } catch (LoggingException e) {
                     throw new RuntimeException(e);
                 } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                } catch (ParseException e) {
                     throw new RuntimeException(e);
                 }
 
