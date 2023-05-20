@@ -134,7 +134,7 @@ public final class mcadminToolkit extends JavaPlugin {
 
                         //Date date = lastExecutionTime.getDate("executionTime");
                         Date date = df.parse(lastExecutionTime.getString("executionTime"));
-                        org.mcadminToolkit.sqlHandler.logger.createLog(finalCon, org.mcadminToolkit.sqlHandler.logger.Sources.SYSTEM, "SYSTEM", "Server stopped on " + df.format(date));
+                        org.mcadminToolkit.sqlHandler.logger.createLog(finalCon, org.mcadminToolkit.sqlHandler.logger.Sources.SYSTEM, "SYSTEM", "Server stopped", date);
                     }
 
                     org.mcadminToolkit.sqlHandler.logger.createLog(finalCon, org.mcadminToolkit.sqlHandler.logger.Sources.SYSTEM, "SYSTEM", "Server started");

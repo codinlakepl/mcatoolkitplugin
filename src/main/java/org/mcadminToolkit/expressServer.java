@@ -662,6 +662,35 @@ class Bindings {
         res.send(obj.toString());
     }
 
+    @DynExpress(context = "/LOGS", method = RequestMethod.POST)
+    public void getLOGS (Request req, Response res) {
+        Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
+        String body = inputBody.hasNext() ? inputBody.next() : "";
+
+        int secLvl = checkSession(body);
+
+        if (secLvl == 0 /*&& !extendSession(body)*/) {
+            res.send("login");
+            return;
+        }
+
+        String[] logs;
+
+        try {
+            logs = logger.getAllLogs(expressServer.conGlobal);
+        } catch (LoggingException e) {
+            throw new RuntimeException(e);
+        }
+
+        String solidLogs = "";
+
+        for (int i = 0; i < logs.length; i++) {
+            solidLogs += logs[i] + "\n";
+        }
+
+        res.send(solidLogs);
+    }
+
     @DynExpress(context = "/ISWORKING") // Both defined
     public void getISWORKING(Request req, Response res) {
         res.send("Returns info that server is working or not");
