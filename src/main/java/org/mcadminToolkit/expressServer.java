@@ -35,6 +35,8 @@ import org.mcadminToolkit.playerslist.playerslist;
 import org.mcadminToolkit.serverStats.serverStats;
 
 import org.mcadminToolkit.playermanagement.ban;
+import org.mcadminToolkit.sqlHandler.LoggingException;
+import org.mcadminToolkit.sqlHandler.logger;
 import org.mcadminToolkit.whitelist.whitelist;
 
 import static org.mcadminToolkit.express.utils.middleware.Middleware.cors;
@@ -88,6 +90,19 @@ class Bindings {
         }
 
         return secLvl;
+    }
+
+    String getSessionLabel (String sessionKey) {
+
+        String label;
+
+        try {
+            label = session.getSessionLabel(session.getSessionIndex(sessionKey));
+        } catch (NoSessionException | SessionExpirationException e) {
+            return "";
+        }
+
+        return label;
     }
 
     boolean extendSession (String sessionKey) {
@@ -244,6 +259,16 @@ class Bindings {
         } catch (Exception e) {
             res.send(e.getMessage());
         }
+
+        boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("ban").getBoolean("log");
+
+        if (shouldLog) {
+            try {
+                logger.createLog(expressServer.conGlobal, logger.Sources.APP, getSessionLabel(sessionKey), "Banned player " + username);
+            } catch (LoggingException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     @DynExpress(context = "/BANIP", method = RequestMethod.POST) // Both defined
@@ -281,6 +306,16 @@ class Bindings {
         } catch (Exception e) {
             res.send(e.getMessage());
         }
+
+        boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("banIp").getBoolean("log");
+
+        if (shouldLog) {
+            try {
+                logger.createLog(expressServer.conGlobal, logger.Sources.APP, getSessionLabel(sessionKey), "IP banned player " + playerName);
+            } catch (LoggingException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     @DynExpress(context = "/UNBAN", method = RequestMethod.POST) // Both defined
@@ -316,6 +351,16 @@ class Bindings {
         } catch (Exception e) {
             res.send(e.getMessage());
         }
+
+        boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("unban").getBoolean("log");
+
+        if (shouldLog) {
+            try {
+                logger.createLog(expressServer.conGlobal, logger.Sources.APP, getSessionLabel(sessionKey), "Unbanned player " + username);
+            } catch (LoggingException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     @DynExpress(context = "/UNBANIP", method = RequestMethod.POST)
@@ -347,6 +392,16 @@ class Bindings {
             res.send("Success");
         } catch (Exception e) {
             res.send(e.getMessage());
+        }
+
+        boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("unbanIp").getBoolean("log");
+
+        if (shouldLog) {
+            try {
+                logger.createLog(expressServer.conGlobal, logger.Sources.APP, getSessionLabel(sessionKey), "Unbanned ip " + ip);
+            } catch (LoggingException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -383,6 +438,16 @@ class Bindings {
         }catch (Exception e){
             res.send(e.toString());
         }
+
+        boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("kick").getBoolean("log");
+
+        if (shouldLog) {
+            try {
+                logger.createLog(expressServer.conGlobal, logger.Sources.APP, getSessionLabel(sessionKey), "Kicked player " + username);
+            } catch (LoggingException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     @DynExpress(context = "/WHITEON", method = RequestMethod.POST)
@@ -411,6 +476,16 @@ class Bindings {
         } catch (Exception e) {
             res.send(e.getMessage());
         }
+
+        boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("whitelistOnOff").getBoolean("log");
+
+        if (shouldLog) {
+            try {
+                logger.createLog(expressServer.conGlobal, logger.Sources.APP, getSessionLabel(body), "Enabled whitelist");
+            } catch (LoggingException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     @DynExpress(context = "/WHITEOFF", method = RequestMethod.POST)
@@ -438,6 +513,16 @@ class Bindings {
             res.send(output);
         } catch (Exception e) {
             res.send(e.getMessage());
+        }
+
+        boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("whitelistOnOff").getBoolean("log");
+
+        if (shouldLog) {
+            try {
+                logger.createLog(expressServer.conGlobal, logger.Sources.APP, getSessionLabel(body), "Disabled whitelist");
+            } catch (LoggingException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -476,6 +561,16 @@ class Bindings {
         } catch (Exception e) {
             res.send(e.getMessage());
         }
+
+        boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("whitelistAddRemovePlayer").getBoolean("log");
+
+        if (shouldLog) {
+            try {
+                logger.createLog(expressServer.conGlobal, logger.Sources.APP, getSessionLabel(sessionKey), "Added player " + username + " to whitelist");
+            } catch (LoggingException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     @DynExpress(context = "/WHITEREMOVE", method = RequestMethod.POST) // Both defined
@@ -513,6 +608,16 @@ class Bindings {
         } catch (Exception e) {
             res.send(e.getMessage());
         }
+
+        boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("whitelistAddRemovePlayer").getBoolean("log");
+
+        if (shouldLog) {
+            try {
+                logger.createLog(expressServer.conGlobal, logger.Sources.APP, getSessionLabel(sessionKey), "Removed player " + username + " from whitelist");
+            } catch (LoggingException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     @DynExpress(context = "/STATS", method = RequestMethod.POST) // Both defined
@@ -539,7 +644,51 @@ class Bindings {
         obj.put ("playersOnline", serverStats.playersOnline(expressServer.pluginGlobal));
         obj.put ("ramUsage", serverStats.ramUsage(expressServer.pluginGlobal));
 
+        String[] logs;
+        try {
+            logs = logger.getLast10Logs(expressServer.conGlobal);
+        } catch (LoggingException e) {
+            throw new RuntimeException(e);
+        }
+
+        JSONArray arr = new JSONArray();
+
+        for (int i = 0; i < logs.length; i++) {
+            arr.put(logs[i]);
+        }
+
+        obj.put ("logs", arr);
+
         res.send(obj.toString());
+    }
+
+    @DynExpress(context = "/LOGS", method = RequestMethod.POST)
+    public void getLOGS (Request req, Response res) {
+        Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
+        String body = inputBody.hasNext() ? inputBody.next() : "";
+
+        int secLvl = checkSession(body);
+
+        if (secLvl == 0 /*&& !extendSession(body)*/) {
+            res.send("login");
+            return;
+        }
+
+        String[] logs;
+
+        try {
+            logs = logger.getAllLogs(expressServer.conGlobal);
+        } catch (LoggingException e) {
+            throw new RuntimeException(e);
+        }
+
+        String solidLogs = "";
+
+        for (int i = 0; i < logs.length; i++) {
+            solidLogs += logs[i] + "\n";
+        }
+
+        res.send(solidLogs);
     }
 
     @DynExpress(context = "/ISWORKING") // Both defined

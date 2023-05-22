@@ -3,7 +3,9 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.Server;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class banlist {
@@ -11,7 +13,7 @@ public class banlist {
         Server server = plugin.getServer();
 
         Set<OfflinePlayer> bannedPlayersSet = server.getBannedPlayers();
-        Set<String> bannedPlayersStrings = new HashSet<String>();
+        List<String> bannedPlayersStrings = new ArrayList<>();
 
         for (OfflinePlayer bannedPlayer : bannedPlayersSet){
             bannedPlayersStrings.add(bannedPlayer.getName());

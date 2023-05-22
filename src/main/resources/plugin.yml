@@ -4,5 +4,11 @@ version: 0.0.1
 
 commands:
   createAuthKey:
-    description: Creates auth key and gives you a download code for it
-    usage: /<command> <secLvl>
+    description: Creates auth key and gives you a download code for it. There can't be more than one auth key with the same label
+    usage: /<command> <secLvl> <label>
+  listAuthKeys:
+    description: Lists created auth keys
+    usage: /<command>
+  removeAuthKey:
+    description: Removes auth key with given label
+    usage: /<command> <label>

@@ -5,13 +5,15 @@ import org.bukkit.Server;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class whitelist {
     public static String[] getWhiteList(JavaPlugin plugin){
         Server server = plugin.getServer();
-        Set<String> whitelistTMP = new HashSet<String>();
+        List<String> whitelistTMP = new ArrayList<>();
 
         Set<OfflinePlayer> whitelistPlayers = server.getWhitelistedPlayers();
 
