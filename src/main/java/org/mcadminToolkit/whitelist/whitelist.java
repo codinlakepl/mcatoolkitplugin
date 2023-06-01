@@ -1,5 +1,6 @@
 package org.mcadminToolkit.whitelist;
 
+import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Server;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -28,8 +29,13 @@ public class whitelist {
         Server server = plugin.getServer();
 
         try {
-            server.dispatchCommand(server.getConsoleSender(), "whitelist on");
-            server.reloadWhitelist();
+            Bukkit.getScheduler().runTask(plugin, new Runnable() {
+                @Override
+                public void run() {
+                    server.dispatchCommand(server.getConsoleSender(), "whitelist on");
+                    server.reloadWhitelist();
+                }
+            });
         } catch (Exception err) {
             return err.toString();
         }
@@ -41,8 +47,13 @@ public class whitelist {
         Server server = plugin.getServer();
 
         try {
-            server.dispatchCommand(server.getConsoleSender(), "whitelist off");
-            server.reloadWhitelist();
+            Bukkit.getScheduler().runTask(plugin, new Runnable() {
+                @Override
+                public void run() {
+                    server.dispatchCommand(server.getConsoleSender(), "whitelist off");
+                    server.reloadWhitelist();
+                }
+            });
         } catch (Exception err) {
             return err.toString();
         }
@@ -54,8 +65,13 @@ public class whitelist {
         Server server = plugin.getServer();
 
         try{
-            server.dispatchCommand(server.getConsoleSender(), "whitelist add " + userName);
-            server.reloadWhitelist();
+            Bukkit.getScheduler().runTask(plugin, new Runnable() {
+                @Override
+                public void run() {
+                    server.dispatchCommand(server.getConsoleSender(), "whitelist add " + userName);
+                    server.reloadWhitelist();
+                }
+            });
         }catch (Exception err){
             return err.toString();
         }
@@ -67,8 +83,13 @@ public class whitelist {
         Server server = plugin.getServer();
 
         try{
-            server.dispatchCommand(server.getConsoleSender(), "whitelist remove " + userName);
-            server.reloadWhitelist();
+            Bukkit.getScheduler().runTask(plugin, new Runnable() {
+                @Override
+                public void run() {
+                    server.dispatchCommand(server.getConsoleSender(), "whitelist remove " + userName);
+                    server.reloadWhitelist();
+                }
+            });
         }catch (Exception err){
             return err.toString();
         }
