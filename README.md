@@ -3,7 +3,7 @@ MCAdmin Toolkit is a tool that allow administrators and moderators manage player
 
 **Link to Android app:** [https://github.com/MCAdmin-Toolkit-dev-team/android-app](https://github.com/MCAdmin-Toolkit-dev-team/android-app)
 
-### Installation
+## Installation
 First set up a Minecraft bukkit server. Spigot will work as well. Then download the plugin:
 
 [https://github.com/MCAdmin-Toolkit-dev-team/bukkit-backend/releases/download/prealpha-3.1/MCAdmin-Toolkit-Connector-2023-06-01-prealpha-3.jar](https://github.com/MCAdmin-Toolkit-dev-team/bukkit-backend/releases/download/prealpha-3.1/MCAdmin-Toolkit-Connector-2023-06-01-prealpha-3.jar)
@@ -30,7 +30,7 @@ Next, run your server.
 
 And last, most important thing: have fun!
 
-### Configuration
+## Configuration
 
 Plugin's config is located under:
 
