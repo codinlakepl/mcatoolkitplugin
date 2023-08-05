@@ -21,7 +21,7 @@
 > [21:18:17] [Server thread/INFO]: U6tQf
 > [21:18:17] [Server thread/INFO]: It will resist 5 minutes
 > ```
-> Download code is a code, that you should enter in our app. You can read more about it here: [https://github.com/MCAdmin-Toolkit-dev-team/MCAdmin-Toolkit/docs/USAGE.md#download-key](https://github.com/MCAdmin-Toolkit-dev-team/MCAdmin-Toolkit/docs/USAGE.md#download-key)
+> Download code is a code, that you should enter in our app. You can read more about it here: [https://github.com/MCAdmin-Toolkit-dev-team/MCAdmin-Toolkit/blob/master/docs/USAGE.md#download-key](https://github.com/MCAdmin-Toolkit-dev-team/MCAdmin-Toolkit/blob/master/docs/USAGE.md#download-key)
 
 ### listauthkeys
 > `listauthkeys` - it lists all active access keys<br /><br />
