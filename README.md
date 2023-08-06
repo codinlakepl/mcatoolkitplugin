@@ -4,7 +4,7 @@
 
 <br />
 
-[![Project license](https://img.shields.io/github/license/MCAdmin-Toolkit-dev-team/MCAdmin-Toolkit-plugin.svg?style=flat-square)](LICENSE)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
 <br />
 
