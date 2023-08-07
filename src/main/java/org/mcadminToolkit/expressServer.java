@@ -1,6 +1,13 @@
 package org.mcadminToolkit;
 
 import com.sun.net.httpserver.HttpsConfigurator;
+import io.undertow.Handlers;
+import io.undertow.Undertow;
+import io.undertow.io.Receiver;
+import io.undertow.server.HttpHandler;
+import io.undertow.server.HttpServerExchange;
+import io.undertow.util.Headers;
+import io.undertow.util.HttpString;
 import nl.altindag.ssl.SSLFactory;
 import nl.altindag.ssl.util.PemUtils;
 import express.DynExpress;
@@ -74,6 +81,53 @@ public class expressServer {
         app.use(cors ());
         app.listen(port);
         plugin.getLogger().info("Server https initialized successfully");
+        undertowTest();
+    }
+
+    public static void undertowTest () {
+        X509ExtendedKeyManager keyManager = PemUtils.loadIdentityMaterial(FileSystems.getDefault().getPath("./plugins/MCAdmin-Toolkit-Connector/rootCA.crt"), FileSystems.getDefault().getPath("./plugins/MCAdmin-Toolkit-Connector/rootCA.key"));
+
+        X509ExtendedTrustManager trustManager = PemUtils.loadTrustMaterial(FileSystems.getDefault().getPath("./plugins/MCAdmin-Toolkit-Connector/rootCA.crt"));
+
+        SSLFactory sslFactory = SSLFactory.builder()
+                .withIdentityMaterial(keyManager)
+                .withTrustMaterial(trustManager)
+                .build();
+
+        SSLContext sslContext = sslFactory.getSslContext();
+
+        Undertow server = Undertow.builder()
+                .addHttpsListener(9090, "127.0.0.1", sslContext)
+                .addHttpListener(8080, "127.0.0.1")
+                .setHandler(Handlers.pathTemplate()
+                        .add("/hello-world", new TestUndertowItemHandler ())
+                )
+                .build();
+        server.start();
+        pluginGlobal.getLogger().info("Undertow server http started");
+    }
+}
+
+class TestUndertowItemHandler implements HttpHandler {
+
+    @Override
+    public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
+        HttpString method = httpServerExchange.getRequestMethod();
+
+        if (!method.equalToString("POST")) {
+            httpServerExchange.setStatusCode(405);
+            return;
+        }
+
+        httpServerExchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
+            @Override
+            public void handle(HttpServerExchange exchange, byte[] message) {
+                httpServerExchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                httpServerExchange.getResponseSender().send(new String(message));
+            }
+        });
+
+        httpServerExchange.getResponseSender().send("Hello world");
     }
 }
 
