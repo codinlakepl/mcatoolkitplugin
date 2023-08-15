@@ -205,6 +205,8 @@ class GetIndex implements HttpHandler {
 class PostWhitelist implements HttpHandler {
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
+
         HttpString method = exchange.getRequestMethod();
 
         if (!method.equalToString("POST")) {
@@ -250,6 +252,8 @@ class PostWhitelist implements HttpHandler {
 class PostPlayers implements HttpHandler {
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
+
         HttpString method = exchange.getRequestMethod();
 
         if (!method.equalToString("POST")) {
@@ -310,6 +314,8 @@ class PostPlayers implements HttpHandler {
 class PostBanlist implements HttpHandler {
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
+
         HttpString method = exchange.getRequestMethod();
 
         if (!method.equalToString("POST")) {
@@ -354,6 +360,8 @@ class PostBan implements HttpHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
+
         HttpString method = exchange.getRequestMethod();
 
         if (!method.equalToString("POST")) {
@@ -416,6 +424,8 @@ class PostBanIP implements HttpHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
+
         HttpString method = exchange.getRequestMethod();
 
         if (!method.equalToString("POST")) {
@@ -478,6 +488,8 @@ class PostUnban implements HttpHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
+
         HttpString method = exchange.getRequestMethod();
 
         if (!method.equalToString("POST")) {
@@ -538,6 +550,8 @@ class PostUnbanIP implements HttpHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
+
         HttpString method = exchange.getRequestMethod();
 
         if (!method.equalToString("POST")) {
@@ -598,6 +612,8 @@ class PostKick implements HttpHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
+
         HttpString method = exchange.getRequestMethod();
 
         if (!method.equalToString("POST")) {
@@ -659,6 +675,8 @@ class PostWhiteOn implements HttpHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
+
         HttpString method = exchange.getRequestMethod();
 
         if (!method.equalToString("POST")) {
@@ -715,6 +733,8 @@ class PostWhiteOff implements HttpHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
+
         HttpString method = exchange.getRequestMethod();
 
         if (!method.equalToString("POST")) {
@@ -771,6 +791,8 @@ class PostWhiteAdd implements HttpHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
+
         HttpString method = exchange.getRequestMethod();
 
         if (!method.equalToString("POST")) {
@@ -833,6 +855,8 @@ class PostWhiteRemove implements HttpHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
+
         HttpString method = exchange.getRequestMethod();
 
         if (!method.equalToString("POST")) {
@@ -895,6 +919,8 @@ class PostStats implements HttpHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
+
         HttpString method = exchange.getRequestMethod();
 
         if (!method.equalToString("POST")) {
@@ -946,6 +972,8 @@ class PostLogs implements HttpHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
+
         HttpString method = exchange.getRequestMethod();
 
         if (!method.equalToString("POST")) {
@@ -991,6 +1019,8 @@ class PostLogin implements HttpHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
+
         HttpString method = exchange.getRequestMethod();
 
         if (!method.equalToString("POST")) {
@@ -1054,6 +1084,8 @@ class PostAuthKey implements HttpHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
+
         HttpString method = exchange.getRequestMethod();
 
         if (!method.equalToString("POST")) {
