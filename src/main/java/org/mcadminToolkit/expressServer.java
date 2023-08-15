@@ -1,13 +1,14 @@
 package org.mcadminToolkit;
 
-import com.sun.net.httpserver.HttpsConfigurator;
+import io.undertow.Handlers;
+import io.undertow.Undertow;
+import io.undertow.io.Receiver;
+import io.undertow.server.HttpHandler;
+import io.undertow.server.HttpServerExchange;
+import io.undertow.util.Headers;
+import io.undertow.util.HttpString;
 import nl.altindag.ssl.SSLFactory;
 import nl.altindag.ssl.util.PemUtils;
-import express.DynExpress;
-import express.Express;
-import express.http.RequestMethod;
-import express.http.request.Request;
-import express.http.response.Response;
 
 import javax.imageio.ImageIO;
 import javax.net.ssl.SSLContext;
@@ -39,8 +40,6 @@ import org.mcadminToolkit.sqlHandler.LoggingException;
 import org.mcadminToolkit.sqlHandler.logger;
 import org.mcadminToolkit.whitelist.whitelist;
 
-import static org.mcadminToolkit.express.utils.middleware.Middleware.cors;
-
 public class expressServer {
     public static JavaPlugin pluginGlobal;
     public static Connection conGlobal;
@@ -49,14 +48,6 @@ public class expressServer {
 
         pluginGlobal = plugin;
         conGlobal = con;
-        //Path cert = new File("cert.pem").toPath();
-        //Path key = new File("key.pem").toPath();
-
-        /*ClassLoader classloader = Thread.currentThread().getContextClassLoader();
-        InputStream cert = classloader.getResourceAsStream("rootCA.crt");
-        InputStream key = classloader.getResourceAsStream("rootCA.key");*/
-
-
 
         X509ExtendedKeyManager keyManager = PemUtils.loadIdentityMaterial(FileSystems.getDefault().getPath("./plugins/MCAdmin-Toolkit-Connector/rootCA.crt"), FileSystems.getDefault().getPath("./plugins/MCAdmin-Toolkit-Connector/rootCA.key"));
 
@@ -69,17 +60,37 @@ public class expressServer {
 
         SSLContext sslContext = sslFactory.getSslContext();
 
-        Express app = new Express(new HttpsConfigurator(sslContext));
-        app.bind(new Bindings());
-        app.use(cors ());
-        app.listen(port);
+        Undertow server = Undertow.builder()
+                .addHttpsListener(port, "0.0.0.0", sslContext)
+                .setHandler(Handlers.pathTemplate()
+                        .add("/", new GetIndex())
+                        .add("/WHITELIST", new PostWhitelist())
+                        .add("/PLAYERS", new PostPlayers())
+                        .add("/BANLIST", new PostBanlist())
+                        .add("/BAN", new PostBan())
+                        .add("/BANIP", new PostBanIP())
+                        .add("/UNBAN", new PostUnban())
+                        .add("/UNBANIP", new PostUnbanIP())
+                        .add("/KICK", new PostKick())
+                        .add("/WHITEON", new PostWhiteOn())
+                        .add("/WHITEOFF", new PostWhiteOff())
+                        .add("/WHITEADD", new PostWhiteAdd())
+                        .add("/WHITEREMOVE", new PostWhiteRemove())
+                        .add("/STATS", new PostStats())
+                        .add("/LOGS", new PostLogs())
+                        .add("/LOGIN", new PostLogin())
+                        .add("/GETAUTHKEY", new PostAuthKey())
+                )
+                .build();
+
+        server.start();
+
         plugin.getLogger().info("Server https initialized successfully");
     }
 }
 
-class Bindings {
-
-    int checkSession (String sessionKey) {
+class ServerCommons {
+    static int checkSession (String sessionKey) {
 
         int secLvl;
 
@@ -92,7 +103,7 @@ class Bindings {
         return secLvl;
     }
 
-    String getSessionLabel (String sessionKey) {
+    static String getSessionLabel (String sessionKey) {
 
         String label;
 
@@ -105,7 +116,7 @@ class Bindings {
         return label;
     }
 
-    boolean extendSession (String sessionKey) {
+    static boolean extendSession (String sessionKey) {
         try {
             session.extendSession(session.getSessionIndex(sessionKey));
         } catch (NoSessionException e) {
@@ -114,659 +125,916 @@ class Bindings {
 
         return true;
     }
+}
 
-    @DynExpress() // Default is context="/" and method=RequestMethod.GET
-    public void getHuj(Request req, Response res) {
-        res.send("MCAdmin Toolkit API v0.1");
+class GetIndex implements HttpHandler {
+    @Override
+    public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseSender().send("MCAdmin Toolkit API v0.1");
     }
+}
 
-    @DynExpress(context = "/WHITELIST", method = RequestMethod.POST) // Both defined
-    public void getWHITELIST(Request req, Response res) {
-        Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
-        String body = inputBody.hasNext() ? inputBody.next() : "";
+class PostWhitelist implements HttpHandler {
+    @Override
+    public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
 
-        int secLvl = checkSession(body);
+        HttpString method = exchange.getRequestMethod();
 
-        // request to login if user isn't logged in or, extedning session time failed
-        // input text: session key
-        if (secLvl == 0 /*&& !extendSession(body)*/) {
-            res.send("login");
+        if (!method.equalToString("POST")) {
+            exchange.setStatusCode(405);
             return;
         }
 
-        JSONArray jsonArray = new JSONArray();
+        exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
+            @Override
+            public void handle(HttpServerExchange exchange, byte[] message) {
+                String body = new String(message);
 
-        String[] arr = whitelist.getWhiteList(expressServer.pluginGlobal);
+                int secLvl = ServerCommons.checkSession(body);
 
-        for (String player :
-                arr) {
-            jsonArray.put(player);
-        }
+                // request to login if user isn't logged in or, extedning session time failed
+                // input text: session key
+                if (secLvl == 0 /*&& !extendSession(body)*/) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send("login");
+                    return;
+                }
 
-        JSONObject obj = new JSONObject();
-        obj.put("isEnabled", Boolean.parseBoolean(whitelist.checkWhitelistStatus(expressServer.pluginGlobal)));
-        obj.put("players", jsonArray);
+                JSONArray jsonArray = new JSONArray();
 
-        res.send(obj.toString());
-    }
+                String[] arr = whitelist.getWhiteList(expressServer.pluginGlobal);
 
-    @DynExpress(context = "/PLAYERS", method = RequestMethod.POST) // Both defined
-    public void getPLAYERS(Request req, Response res) {
-        Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
-        String body = inputBody.hasNext() ? inputBody.next() : "";
+                for (String player :
+                        arr) {
+                    jsonArray.put(player);
+                }
 
-        // input text: session key
-        int secLvl = checkSession(body);
+                JSONObject obj = new JSONObject();
+                obj.put("isEnabled", Boolean.parseBoolean(whitelist.checkWhitelistStatus(expressServer.pluginGlobal)));
+                obj.put("players", jsonArray);
 
-        if (secLvl == 0 /*&& !extendSession(body)*/) {
-            res.send("login");
-            return;
-        }
-
-        List<playerInfo> onlinePlayers = new ArrayList<playerInfo> ();
-
-        List<playerInfo> offlinePlayers = new ArrayList<playerInfo>();
-
-        onlinePlayers.addAll(Arrays.asList(playerslist.getPlayers(expressServer.pluginGlobal)));
-        offlinePlayers.addAll(Arrays.asList(offlineplayerslist.getOfflinePlayers(expressServer.pluginGlobal)));
-
-        JSONArray onlineArray = new JSONArray();
-        JSONArray offlineArray = new JSONArray();
-
-        for (playerInfo info : onlinePlayers) {
-            //playerNicknames.add (info.name);
-
-            JSONObject player = new JSONObject();
-            player.put("name", info.name);
-            player.put("uuid", info.uuid);
-
-            onlineArray.put(player);
-        }
-
-        for (playerInfo info : offlinePlayers) {
-            //playerNicknames.add (info.name);
-            offlineArray.put(info.name);
-        }
-
-        JSONObject obj = new JSONObject();
-        obj.put ("online", onlineArray);
-        obj.put ("offline", offlineArray);
-
-        //res.send(Arrays.toString(playerNicknames.toArray()));
-        res.send(obj.toString());
-    }
-
-    @DynExpress(context = "/BANLIST", method = RequestMethod.POST) // Both defined
-    public void getBANLIST(Request req, Response res) {
-        Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
-        String body = inputBody.hasNext() ? inputBody.next() : "";
-
-        // input text: session key
-        int secLvl = checkSession(body);
-
-        if (secLvl == 0 /*&& !extendSession(body)*/) {
-            res.send("login");
-            return;
-        }
-
-        List<String> normalBans = new ArrayList<String>();
-        List<String> ipBans = new ArrayList<String>();
-        normalBans.addAll(Arrays.asList(banlist.playerBanList(expressServer.pluginGlobal)));
-        ipBans.addAll(Arrays.asList(banlist.ipBanList(expressServer.pluginGlobal)));
-
-        JSONArray normalBansJson = new JSONArray (normalBans);
-        JSONArray ipBansJson = new JSONArray (ipBans);
-
-        JSONObject json = new JSONObject();
-        json.put("normalBans", normalBansJson);
-        json.put("ipBans", ipBans);
-
-        res.send (json.toString());
-    }
-
-    @DynExpress(context = "/BAN", method = RequestMethod.POST) // Both defined
-    public void getBAN(Request req, Response res) {
-        /*res.send("Accepts: BAN <username> \n" +
-                "Bans specific player");*/
-
-        Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
-        String body = inputBody.hasNext() ? inputBody.next() : "";
-
-        JSONObject json = new JSONObject(body); // {"username": "IpyZ", "reason": "test123", "hours": 2 "sessionKey": "test"}
-
-        // input json: username, sessionKey, reason, hours
-        String username = json.getString("username");
-        String sessionKey = json.getString("sessionKey");
-        String reason = json.getString("reason");
-        int hours = json.getInt("hours");
-
-        int secLvl = checkSession(sessionKey);
-
-        if (secLvl == 0 && !extendSession(sessionKey)) {
-            res.send("login");
-            return;
-        }
-
-        if (!(secLvl <= 4)) {
-            res.send("perms");
-            return;
-        }
-
-        try {
-            ban.ban(expressServer.pluginGlobal, username, reason, Date.from(new Date().toInstant().plus(Duration.ofHours(hours))));
-
-            res.send("Success");
-        } catch (Exception e) {
-            res.send(e.getMessage());
-        }
-
-        boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("ban").getBoolean("log");
-
-        if (shouldLog) {
-            try {
-                logger.createLog(expressServer.conGlobal, logger.Sources.APP, getSessionLabel(sessionKey), "Banned player " + username);
-            } catch (LoggingException e) {
-                throw new RuntimeException(e);
+                exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+                exchange.getResponseSender().send(obj.toString());
             }
-        }
+        });
     }
+}
 
-    @DynExpress(context = "/BANIP", method = RequestMethod.POST) // Both defined
-    public void getBANIP(Request req, Response res) {
-        /*res.send("Accepts: BANIP <ip> \n" +
-                "Bans specific ip");*/
+class PostPlayers implements HttpHandler {
+    @Override
+    public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
 
-        Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
-        String body = inputBody.hasNext() ? inputBody.next() : "";
+        HttpString method = exchange.getRequestMethod();
 
-        JSONObject json = new JSONObject(body); // {"ip": "127.0.0.1", "sessionKey": "test"}
-
-        // input json: username, sessionKey, reason
-        String playerName = json.getString("username");
-        String sessionKey = json.getString("sessionKey");
-        String reason = json.getString("reason");
-
-        int secLvl = checkSession(sessionKey);
-
-        if (secLvl == 0 && !extendSession(sessionKey)) {
-            res.send("login");
+        if (!method.equalToString("POST")) {
+            exchange.setStatusCode(405);
             return;
         }
 
-        if (!(secLvl <= 2)) {
-            res.send("perms");
-            return;
-        }
+        exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
+            @Override
+            public void handle(HttpServerExchange exchange, byte[] message) {
+                String body = new String(message);
 
+                // input text: session key
+                int secLvl = ServerCommons.checkSession(body);
 
-        try {
-            ban.banIp(expressServer.pluginGlobal, playerName, reason);
+                if (secLvl == 0 /*&& !extendSession(body)*/) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send("login");
+                    return;
+                }
 
-            res.send("Success");
-        } catch (Exception e) {
-            res.send(e.getMessage());
-        }
+                List<playerInfo> onlinePlayers = new ArrayList<playerInfo> ();
 
-        boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("banIp").getBoolean("log");
+                List<playerInfo> offlinePlayers = new ArrayList<playerInfo>();
 
-        if (shouldLog) {
-            try {
-                logger.createLog(expressServer.conGlobal, logger.Sources.APP, getSessionLabel(sessionKey), "IP banned player " + playerName);
-            } catch (LoggingException e) {
-                throw new RuntimeException(e);
+                onlinePlayers.addAll(Arrays.asList(playerslist.getPlayers(expressServer.pluginGlobal)));
+                offlinePlayers.addAll(Arrays.asList(offlineplayerslist.getOfflinePlayers(expressServer.pluginGlobal)));
+
+                JSONArray onlineArray = new JSONArray();
+                JSONArray offlineArray = new JSONArray();
+
+                for (playerInfo info : onlinePlayers) {
+                    //playerNicknames.add (info.name);
+
+                    JSONObject player = new JSONObject();
+                    player.put("name", info.name);
+                    player.put("uuid", info.uuid);
+
+                    onlineArray.put(player);
+                }
+
+                for (playerInfo info : offlinePlayers) {
+                    //playerNicknames.add (info.name);
+                    offlineArray.put(info.name);
+                }
+
+                JSONObject obj = new JSONObject();
+                obj.put ("online", onlineArray);
+                obj.put ("offline", offlineArray);
+
+                exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+                exchange.getResponseSender().send(obj.toString());
             }
-        }
+        });
     }
+}
 
-    @DynExpress(context = "/UNBAN", method = RequestMethod.POST) // Both defined
-    public void getUNBAN(Request req, Response res) {
-        /*res.send("Accepts: BANIP <ip> \n" +
-                "Bans specific ip");*/
+class PostBanlist implements HttpHandler {
+    @Override
+    public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
 
-        Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
-        String body = inputBody.hasNext() ? inputBody.next() : "";
+        HttpString method = exchange.getRequestMethod();
 
-        JSONObject json = new JSONObject(body); // {"username": "IpyZ", "sessionKey": "test"}
-
-        // input json: username, sessionKey
-        String username = json.getString("username");
-        String sessionKey = json.getString("sessionKey");
-
-        int secLvl = checkSession(sessionKey);
-
-        if (secLvl == 0 && !extendSession(sessionKey)) {
-            res.send("login");
+        if (!method.equalToString("POST")) {
+            exchange.setStatusCode(405);
             return;
         }
 
-        if (!(secLvl <= 4)) {
-            res.send("perms");
-            return;
-        }
+        exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
+            @Override
+            public void handle(HttpServerExchange exchange, byte[] message) {
+                String body = new String(message);
+                // input text: session key
+                int secLvl = ServerCommons.checkSession(body);
 
-        try {
-            ban.unban(expressServer.pluginGlobal, username);
+                if (secLvl == 0 /*&& !extendSession(body)*/) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send("login");
+                    return;
+                }
 
-            res.send("Success");
-        } catch (Exception e) {
-            res.send(e.getMessage());
-        }
+                List<String> normalBans = new ArrayList<String>();
+                List<String> ipBans = new ArrayList<String>();
+                normalBans.addAll(Arrays.asList(banlist.playerBanList(expressServer.pluginGlobal)));
+                ipBans.addAll(Arrays.asList(banlist.ipBanList(expressServer.pluginGlobal)));
 
-        boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("unban").getBoolean("log");
+                JSONArray normalBansJson = new JSONArray (normalBans);
+                JSONArray ipBansJson = new JSONArray (ipBans);
 
-        if (shouldLog) {
-            try {
-                logger.createLog(expressServer.conGlobal, logger.Sources.APP, getSessionLabel(sessionKey), "Unbanned player " + username);
-            } catch (LoggingException e) {
-                throw new RuntimeException(e);
+                JSONObject json = new JSONObject();
+                json.put("normalBans", normalBansJson);
+                json.put("ipBans", ipBans);
+
+                exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+                exchange.getResponseSender().send(json.toString());
+
             }
-        }
+        });
     }
+}
 
-    @DynExpress(context = "/UNBANIP", method = RequestMethod.POST)
-    public void getUNBANIP (Request req, Response res) {
-        Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
-        String body = inputBody.hasNext() ? inputBody.next() : "";
+class PostBan implements HttpHandler {
 
-        JSONObject json = new JSONObject(body); // {"ip": "127.0.0.1", "sessionKey": "test"}
+    @Override
+    public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
 
-        // input json: ip, sessionKey
-        String ip = json.getString("ip");
-        String sessionKey = json.getString("sessionKey");
+        HttpString method = exchange.getRequestMethod();
 
-        int secLvl = checkSession(sessionKey);
-
-        if (secLvl == 0 && !extendSession(sessionKey)) {
-            res.send("login");
+        if (!method.equalToString("POST")) {
+            exchange.setStatusCode(405);
             return;
         }
 
-        if (!(secLvl <= 2)) {
-            res.send("perms");
-            return;
-        }
+        exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
+            @Override
+            public void handle(HttpServerExchange exchange, byte[] message) {
+                String body = new String(message);
 
-        try {
-            ban.unbanIp(expressServer.pluginGlobal, ip);
+                JSONObject json = new JSONObject(body); // {"username": "IpyZ", "reason": "test123", "hours": 2 "sessionKey": "test"}
 
-            res.send("Success");
-        } catch (Exception e) {
-            res.send(e.getMessage());
-        }
+                // input json: username, sessionKey, reason, hours
+                String username = json.getString("username");
+                String sessionKey = json.getString("sessionKey");
+                String reason = json.getString("reason");
+                int hours = json.getInt("hours");
 
-        boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("unbanIp").getBoolean("log");
+                int secLvl = ServerCommons.checkSession(sessionKey);
 
-        if (shouldLog) {
-            try {
-                logger.createLog(expressServer.conGlobal, logger.Sources.APP, getSessionLabel(sessionKey), "Unbanned ip " + ip);
-            } catch (LoggingException e) {
-                throw new RuntimeException(e);
+                if (secLvl == 0 && !ServerCommons.extendSession(sessionKey)) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send("login");
+                    return;
+                }
+
+                if (!(secLvl <= 4)) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send("perms");
+                    return;
+                }
+
+                try {
+                    ban.ban(expressServer.pluginGlobal, username, reason, Date.from(new Date().toInstant().plus(Duration.ofHours(hours))));
+
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send("Success");
+                } catch (Exception e) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send(e.getMessage());
+                }
+
+                boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("ban").getBoolean("log");
+
+                if (shouldLog) {
+                    try {
+                        logger.createLog(expressServer.conGlobal, logger.Sources.APP, ServerCommons.getSessionLabel(sessionKey), "Banned player " + username);
+                    } catch (LoggingException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
             }
-        }
+        });
     }
+}
 
-    @DynExpress(context = "/KICK", method = RequestMethod.POST) // Both defined
-    public void getKICK(Request req, Response res) {
-        /*res.send("Accepts: KICK <username> \n" +
-                "Kicks specific player from server");*/
-        Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
-        String body = inputBody.hasNext() ? inputBody.next() : "";
+class PostBanIP implements HttpHandler {
 
-        JSONObject json = new JSONObject(body); // {"username": "IpyZ", "reason": "test123", "sessionKey": "test"}
+    @Override
+    public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
 
-        // input json: username, sessionKey, reason
-        String username = json.getString("username");
-        String sessionKey = json.getString("sessionKey");
-        String reason = json.getString("reason");
+        HttpString method = exchange.getRequestMethod();
 
-        int secLvl = checkSession(sessionKey);
-
-        if (secLvl == 0 && !extendSession(sessionKey)) {
-            res.send("login");
+        if (!method.equalToString("POST")) {
+            exchange.setStatusCode(405);
             return;
         }
 
-        if (!(secLvl <= 5)) {
-            res.send("perms");
-            return;
-        }
+        exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
+            @Override
+            public void handle(HttpServerExchange exchange, byte[] message) {
+                String body = new String(message);
 
-        try{
-            //ban.ban(expressServer.pluginGlobal, body, "TEST", Date.from(Instant.now()));
-            kick.kick(expressServer.pluginGlobal, username, reason);
-            res.send("Success");
-        }catch (Exception e){
-            res.send(e.toString());
-        }
+                JSONObject json = new JSONObject(body); // {"ip": "127.0.0.1", "sessionKey": "test"}
 
-        boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("kick").getBoolean("log");
+                // input json: username, sessionKey, reason
+                String playerName = json.getString("username");
+                String sessionKey = json.getString("sessionKey");
+                String reason = json.getString("reason");
 
-        if (shouldLog) {
-            try {
-                logger.createLog(expressServer.conGlobal, logger.Sources.APP, getSessionLabel(sessionKey), "Kicked player " + username);
-            } catch (LoggingException e) {
-                throw new RuntimeException(e);
+                int secLvl = ServerCommons.checkSession(sessionKey);
+
+                if (secLvl == 0 && !ServerCommons.extendSession(sessionKey)) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send("login");
+                    return;
+                }
+
+                if (!(secLvl <= 2)) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send("perms");
+                    return;
+                }
+
+
+                try {
+                    ban.banIp(expressServer.pluginGlobal, playerName, reason);
+
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send("Success");
+                } catch (Exception e) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send(e.getMessage());
+                }
+
+                boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("banIp").getBoolean("log");
+
+                if (shouldLog) {
+                    try {
+                        logger.createLog(expressServer.conGlobal, logger.Sources.APP, ServerCommons.getSessionLabel(sessionKey), "IP banned player " + playerName);
+                    } catch (LoggingException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
             }
-        }
+        });
     }
+}
 
-    @DynExpress(context = "/WHITEON", method = RequestMethod.POST)
-    public void getWHITEON (Request req, Response res) {
-        Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
-        String body = inputBody.hasNext() ? inputBody.next() : "";
+class PostUnban implements HttpHandler {
 
-        int secLvl = checkSession(body);
+    @Override
+    public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
 
-        if (secLvl == 0 && !extendSession(body)) {
-            res.send("login");
+        HttpString method = exchange.getRequestMethod();
+
+        if (!method.equalToString("POST")) {
+            exchange.setStatusCode(405);
             return;
         }
 
-        if (!(secLvl <= 5)) {
-            res.send("perms");
-            return;
-        }
+        exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
+            @Override
+            public void handle(HttpServerExchange exchange, byte[] message) {
+                String body = new String(message);
 
-        String output;
+                JSONObject json = new JSONObject(body); // {"username": "IpyZ", "sessionKey": "test"}
 
-        try {
-            output = whitelist.enableWhitelist(expressServer.pluginGlobal);
+                // input json: username, sessionKey
+                String username = json.getString("username");
+                String sessionKey = json.getString("sessionKey");
 
-            res.send(output);
-        } catch (Exception e) {
-            res.send(e.getMessage());
-        }
+                int secLvl = ServerCommons.checkSession(sessionKey);
 
-        boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("whitelistOnOff").getBoolean("log");
+                if (secLvl == 0 && !ServerCommons.extendSession(sessionKey)) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send("login");
+                    return;
+                }
 
-        if (shouldLog) {
-            try {
-                logger.createLog(expressServer.conGlobal, logger.Sources.APP, getSessionLabel(body), "Enabled whitelist");
-            } catch (LoggingException e) {
-                throw new RuntimeException(e);
+                if (!(secLvl <= 4)) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send("perms");
+                    return;
+                }
+
+                try {
+                    ban.unban(expressServer.pluginGlobal, username);
+
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send("Success");
+                } catch (Exception e) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send(e.getMessage());
+                }
+
+                boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("unban").getBoolean("log");
+
+                if (shouldLog) {
+                    try {
+                        logger.createLog(expressServer.conGlobal, logger.Sources.APP, ServerCommons.getSessionLabel(sessionKey), "Unbanned player " + username);
+                    } catch (LoggingException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
             }
-        }
+        });
     }
+}
 
-    @DynExpress(context = "/WHITEOFF", method = RequestMethod.POST)
-    public void getWHITEOFF (Request req, Response res) {
-        Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
-        String body = inputBody.hasNext() ? inputBody.next() : "";
+class PostUnbanIP implements HttpHandler {
 
-        int secLvl = checkSession(body);
+    @Override
+    public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
 
-        if (secLvl == 0 && !extendSession(body)) {
-            res.send("login");
+        HttpString method = exchange.getRequestMethod();
+
+        if (!method.equalToString("POST")) {
+            exchange.setStatusCode(405);
             return;
         }
 
-        if (!(secLvl <= 5)) {
-            res.send("perms");
-            return;
-        }
+        exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
+            @Override
+            public void handle(HttpServerExchange exchange, byte[] message) {
+                String body = new String(message);
 
-        String output;
+                JSONObject json = new JSONObject(body); // {"ip": "127.0.0.1", "sessionKey": "test"}
 
-        try {
-            output = whitelist.disableWhitelist(expressServer.pluginGlobal);
+                // input json: ip, sessionKey
+                String ip = json.getString("ip");
+                String sessionKey = json.getString("sessionKey");
 
-            res.send(output);
-        } catch (Exception e) {
-            res.send(e.getMessage());
-        }
+                int secLvl = ServerCommons.checkSession(sessionKey);
 
-        boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("whitelistOnOff").getBoolean("log");
+                if (secLvl == 0 && !ServerCommons.extendSession(sessionKey)) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send("login");
+                    return;
+                }
 
-        if (shouldLog) {
-            try {
-                logger.createLog(expressServer.conGlobal, logger.Sources.APP, getSessionLabel(body), "Disabled whitelist");
-            } catch (LoggingException e) {
-                throw new RuntimeException(e);
+                if (!(secLvl <= 2)) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send("perms");
+                    return;
+                }
+
+                try {
+                    ban.unbanIp(expressServer.pluginGlobal, ip);
+
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send("Success");
+                } catch (Exception e) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send(e.getMessage());
+                }
+
+                boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("unbanIp").getBoolean("log");
+
+                if (shouldLog) {
+                    try {
+                        logger.createLog(expressServer.conGlobal, logger.Sources.APP, ServerCommons.getSessionLabel(sessionKey), "Unbanned ip " + ip);
+                    } catch (LoggingException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
             }
-        }
+        });
     }
+}
 
-    @DynExpress(context = "/WHITEADD", method = RequestMethod.POST) // Both defined
-    public void getWHITEADD(Request req, Response res) {
-        /*res.send("Accepts: WHITEADD <username> \n" +
-                "Adds specific player to whitelist");*/
+class PostKick implements HttpHandler {
 
-        Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
-        String body = inputBody.hasNext() ? inputBody.next() : "";
+    @Override
+    public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
 
-        JSONObject json = new JSONObject(body); // {"username": "IpyZ", "sessionKey": "test"}
+        HttpString method = exchange.getRequestMethod();
 
-        // input json: username, sessionKey
-        String username = json.getString("username");
-        String sessionKey = json.getString("sessionKey");
-
-        int secLvl = checkSession(sessionKey);
-
-        if (secLvl == 0 && !extendSession(sessionKey)) {
-            res.send("login");
+        if (!method.equalToString("POST")) {
+            exchange.setStatusCode(405);
             return;
         }
 
-        if (!(secLvl <= 5)) {
-            res.send("perms");
-            return;
-        }
+        exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
+            @Override
+            public void handle(HttpServerExchange exchange, byte[] message) {
+                String body = new String(message);
 
-        String output;
+                JSONObject json = new JSONObject(body); // {"username": "IpyZ", "reason": "test123", "sessionKey": "test"}
 
-        try {
-            output = whitelist.addWhitelistPlayer(expressServer.pluginGlobal, username);
+                // input json: username, sessionKey, reason
+                String username = json.getString("username");
+                String sessionKey = json.getString("sessionKey");
+                String reason = json.getString("reason");
 
-            res.send(output);
-        } catch (Exception e) {
-            res.send(e.getMessage());
-        }
+                int secLvl = ServerCommons.checkSession(sessionKey);
 
-        boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("whitelistAddRemovePlayer").getBoolean("log");
+                if (secLvl == 0 && !ServerCommons.extendSession(sessionKey)) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send("login");
+                    return;
+                }
 
-        if (shouldLog) {
-            try {
-                logger.createLog(expressServer.conGlobal, logger.Sources.APP, getSessionLabel(sessionKey), "Added player " + username + " to whitelist");
-            } catch (LoggingException e) {
-                throw new RuntimeException(e);
+                if (!(secLvl <= 5)) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send("perms");
+                    return;
+                }
+
+                try{
+                    //ban.ban(expressServer.pluginGlobal, body, "TEST", Date.from(Instant.now()));
+                    kick.kick(expressServer.pluginGlobal, username, reason);
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send("Success");
+                }catch (Exception e){
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send(e.getMessage());
+                }
+
+                boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("kick").getBoolean("log");
+
+                if (shouldLog) {
+                    try {
+                        logger.createLog(expressServer.conGlobal, logger.Sources.APP, ServerCommons.getSessionLabel(sessionKey), "Kicked player " + username);
+                    } catch (LoggingException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
             }
-        }
+        });
     }
+}
 
-    @DynExpress(context = "/WHITEREMOVE", method = RequestMethod.POST) // Both defined
-    public void getWHITEREMOVE(Request req, Response res) {
-        /*res.send("Accepts: WHITEADD <username> \n" +
-                "Adds specific player to whitelist");*/
+class PostWhiteOn implements HttpHandler {
 
-        Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
-        String body = inputBody.hasNext() ? inputBody.next() : "";
+    @Override
+    public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
 
-        JSONObject json = new JSONObject(body); // {"username": "IpyZ", "sessionKey": "test"}
+        HttpString method = exchange.getRequestMethod();
 
-        // input json: username, sessionKey
-        String username = json.getString("username");
-        String sessionKey = json.getString("sessionKey");
-
-        int secLvl = checkSession(sessionKey);
-
-        if (secLvl == 0 && !extendSession(sessionKey)) {
-            res.send("login");
+        if (!method.equalToString("POST")) {
+            exchange.setStatusCode(405);
             return;
         }
 
-        if (!(secLvl <= 5)) {
-            res.send("perms");
-            return;
-        }
+        exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
+            @Override
+            public void handle(HttpServerExchange exchange, byte[] message) {
+                String body = new String(message);
 
-        String output;
+                int secLvl = ServerCommons.checkSession(body);
 
-        try {
-            output = whitelist.removeWhitelistPlayer(expressServer.pluginGlobal, username);
+                if (secLvl == 0 && !ServerCommons.extendSession(body)) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send("login");
+                    return;
+                }
 
-            res.send(output);
-        } catch (Exception e) {
-            res.send(e.getMessage());
-        }
+                if (!(secLvl <= 5)) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send("perms");
+                    return;
+                }
 
-        boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("whitelistAddRemovePlayer").getBoolean("log");
+                String output;
 
-        if (shouldLog) {
-            try {
-                logger.createLog(expressServer.conGlobal, logger.Sources.APP, getSessionLabel(sessionKey), "Removed player " + username + " from whitelist");
-            } catch (LoggingException e) {
-                throw new RuntimeException(e);
+                try {
+                    output = whitelist.enableWhitelist(expressServer.pluginGlobal);
+
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send(output);
+                } catch (Exception e) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send(e.getMessage());
+                }
+
+                boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("whitelistOnOff").getBoolean("log");
+
+                if (shouldLog) {
+                    try {
+                        logger.createLog(expressServer.conGlobal, logger.Sources.APP, ServerCommons.getSessionLabel(body), "Enabled whitelist");
+                    } catch (LoggingException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
             }
-        }
+        });
     }
+}
 
-    @DynExpress(context = "/STATS", method = RequestMethod.POST) // Both defined
-    public void getSTATS(Request req, Response res) {
-        //res.send("Returns server stats (CPU, RAM usage ect.)");
+class PostWhiteOff implements HttpHandler {
 
-        Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
-        String body = inputBody.hasNext() ? inputBody.next() : "";
+    @Override
+    public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
 
-        int secLvl = checkSession(body);
+        HttpString method = exchange.getRequestMethod();
 
-        if (secLvl == 0 /*&& !extendSession(body)*/) {
-            res.send("login");
+        if (!method.equalToString("POST")) {
+            exchange.setStatusCode(405);
             return;
         }
 
-        if (!(secLvl <= 3)) {
-            res.send("perms");
-            return;
-        }
+        exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
+            @Override
+            public void handle(HttpServerExchange exchange, byte[] message) {
+                String body = new String(message);
 
-        JSONObject obj = new JSONObject();
-        obj.put ("cpuLoad", serverStats.cpuUsage(expressServer.pluginGlobal));
-        obj.put ("playersOnline", serverStats.playersOnline(expressServer.pluginGlobal));
-        obj.put ("ramUsage", serverStats.ramUsage(expressServer.pluginGlobal));
+                int secLvl = ServerCommons.checkSession(body);
 
-        String[] logs;
-        try {
-            logs = logger.getLast10Logs(expressServer.conGlobal);
-        } catch (LoggingException e) {
-            throw new RuntimeException(e);
-        }
+                if (secLvl == 0 && !ServerCommons.extendSession(body)) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send("login");
+                    return;
+                }
 
-        JSONArray arr = new JSONArray();
+                if (!(secLvl <= 5)) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send("perms");
+                    return;
+                }
 
-        for (int i = 0; i < logs.length; i++) {
-            arr.put(logs[i]);
-        }
+                String output;
 
-        obj.put ("logs", arr);
+                try {
+                    output = whitelist.disableWhitelist(expressServer.pluginGlobal);
 
-        res.send(obj.toString());
-    }
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send(output);
+                } catch (Exception e) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send(e.getMessage());
+                }
 
-    @DynExpress(context = "/LOGS", method = RequestMethod.POST)
-    public void getLOGS (Request req, Response res) {
-        Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
-        String body = inputBody.hasNext() ? inputBody.next() : "";
+                boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("whitelistOnOff").getBoolean("log");
 
-        int secLvl = checkSession(body);
-
-        if (secLvl == 0 /*&& !extendSession(body)*/) {
-            res.send("login");
-            return;
-        }
-
-        String[] logs;
-
-        try {
-            logs = logger.getAllLogs(expressServer.conGlobal);
-        } catch (LoggingException e) {
-            throw new RuntimeException(e);
-        }
-
-        String solidLogs = "";
-
-        for (int i = 0; i < logs.length; i++) {
-            solidLogs += logs[i] + "\n";
-        }
-
-        res.send(solidLogs);
-    }
-
-    @DynExpress(context = "/ISWORKING") // Both defined
-    public void getISWORKING(Request req, Response res) {
-        res.send("Returns info that server is working or not");
-    }
-
-    @DynExpress(context = "/LOGIN", method = RequestMethod.POST)
-    public void getLOGIN (Request req, Response res) {
-        Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
-        String body = inputBody.hasNext() ? inputBody.next() : "";
-
-        List<playerInfo> onlinePlayers = new ArrayList<playerInfo> ();
-
-        Server server = expressServer.pluginGlobal.getServer();
-
-        BufferedImage img = null;
-
-        String b64Img = null;
-
-        File iconFile = new File ("server-icon.png");
-        if (iconFile.exists() && !iconFile.isDirectory()) {
-            try {
-                img = ImageIO.read(iconFile);
-
-                ByteArrayOutputStream os = new ByteArrayOutputStream();
-                ImageIO.write(img, "png", os);
-
-                b64Img = Base64.getEncoder().encodeToString(os.toByteArray());
-            } catch (IOException e) {
-                b64Img = "none";
+                if (shouldLog) {
+                    try {
+                        logger.createLog(expressServer.conGlobal, logger.Sources.APP, ServerCommons.getSessionLabel(body), "Disabled whitelist");
+                    } catch (LoggingException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
             }
-        } else {
-            b64Img = "none";
-        }
-
-        onlinePlayers.addAll(Arrays.asList(playerslist.getPlayers(expressServer.pluginGlobal)));
-        //offlinePlayers.addAll(Arrays.asList(offlineplayerslist.getOfflinePlayers(expressServer.pluginGlobal)));
-
-        JSONObject obj = new JSONObject();
-        obj.put ("players", onlinePlayers.size() + "/" + server.getMaxPlayers());
-        obj.put ("serverType", "bukkit");
-        obj.put ("icon", b64Img);
-
-        try {
-            String generatedSessionKey = session.createSession(body);
-            obj.put ("sessionKey", generatedSessionKey);
-
-            res.send(obj.toString());
-        } catch (CreateSessionException e) {
-            res.send(e.getMessage());
-        }
+        });
     }
+}
 
-    @DynExpress(context = "/GETAUTHKEY", method = RequestMethod.POST)
-    public void getGETAUTHKEY (Request req, Response res) {
-        Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
-        String body = inputBody.hasNext() ? inputBody.next() : "";
+class PostWhiteAdd implements HttpHandler {
 
-        if (body.equals(createAuthKeyCommand.accessCode) && !createAuthKeyCommand.actualAuthKey.equals("")) {
-            res.send(createAuthKeyCommand.actualAuthKey);
+    @Override
+    public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
+
+        HttpString method = exchange.getRequestMethod();
+
+        if (!method.equalToString("POST")) {
+            exchange.setStatusCode(405);
+            return;
         }
+
+        exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
+            @Override
+            public void handle(HttpServerExchange exchange, byte[] message) {
+                String body = new String(message);
+
+                JSONObject json = new JSONObject(body); // {"username": "IpyZ", "sessionKey": "test"}
+
+                // input json: username, sessionKey
+                String username = json.getString("username");
+                String sessionKey = json.getString("sessionKey");
+
+                int secLvl = ServerCommons.checkSession(sessionKey);
+
+                if (secLvl == 0 && !ServerCommons.extendSession(sessionKey)) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send("login");
+                    return;
+                }
+
+                if (!(secLvl <= 5)) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send("perms");
+                    return;
+                }
+
+                String output;
+
+                try {
+                    output = whitelist.addWhitelistPlayer(expressServer.pluginGlobal, username);
+
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send(output);
+                } catch (Exception e) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send(e.getMessage());
+                }
+
+                boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("whitelistAddRemovePlayer").getBoolean("log");
+
+                if (shouldLog) {
+                    try {
+                        logger.createLog(expressServer.conGlobal, logger.Sources.APP, ServerCommons.getSessionLabel(sessionKey), "Added player " + username + " to whitelist");
+                    } catch (LoggingException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        });
     }
+}
 
-    /*@DynExpress(context = "/REGISTER", method = RequestMethod.POST)
-    public void getREGISTER (Request req, Response res) throws AuthKeyRegistrationException {
-        Scanner inputBody = new Scanner(req.getBody()).useDelimiter("\\A");
-        String body = inputBody.hasNext() ? inputBody.next() : "";
+class PostWhiteRemove implements HttpHandler {
 
-        JSONObject json = new JSONObject(body);
-        int secLvl = json.getInt("secLvl");
+    @Override
+    public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
 
-        String authKey = authKeyRegistration.registerNewAuthKey(sqlConnector.connection, secLvl);
-        res.send(authKey);
-    }*/
+        HttpString method = exchange.getRequestMethod();
 
-    @DynExpress(method = RequestMethod.POST) // Only the method is defined, "/" is used as context
-    public void postIndex(Request req, Response res) {
-        res.send("POST to index");
+        if (!method.equalToString("POST")) {
+            exchange.setStatusCode(405);
+            return;
+        }
+
+        exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
+            @Override
+            public void handle(HttpServerExchange exchange, byte[] message) {
+                String body = new String(message);
+
+                JSONObject json = new JSONObject(body); // {"username": "IpyZ", "sessionKey": "test"}
+
+                // input json: username, sessionKey
+                String username = json.getString("username");
+                String sessionKey = json.getString("sessionKey");
+
+                int secLvl = ServerCommons.checkSession(sessionKey);
+
+                if (secLvl == 0 && !ServerCommons.extendSession(sessionKey)) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send("login");
+                    return;
+                }
+
+                if (!(secLvl <= 5)) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send("perms");
+                    return;
+                }
+
+                String output;
+
+                try {
+                    output = whitelist.removeWhitelistPlayer(expressServer.pluginGlobal, username);
+
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send(output);
+                } catch (Exception e) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send(e.getMessage());
+                }
+
+                boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("whitelistAddRemovePlayer").getBoolean("log");
+
+                if (shouldLog) {
+                    try {
+                        logger.createLog(expressServer.conGlobal, logger.Sources.APP, ServerCommons.getSessionLabel(sessionKey), "Removed player " + username + " from whitelist");
+                    } catch (LoggingException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        });
+    }
+}
+
+class PostStats implements HttpHandler {
+
+    @Override
+    public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
+
+        HttpString method = exchange.getRequestMethod();
+
+        if (!method.equalToString("POST")) {
+            exchange.setStatusCode(405);
+            return;
+        }
+
+        exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
+            @Override
+            public void handle(HttpServerExchange exchange, byte[] message) {
+                String body = new String(message);
+
+                int secLvl = ServerCommons.checkSession(body);
+
+                if (secLvl == 0 /*&& !extendSession(body)*/) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send("login");
+                    return;
+                }
+
+                JSONObject obj = new JSONObject();
+                obj.put ("cpuLoad", serverStats.cpuUsage(expressServer.pluginGlobal));
+                obj.put ("playersOnline", serverStats.playersOnline(expressServer.pluginGlobal));
+                obj.put ("ramUsage", serverStats.ramUsage(expressServer.pluginGlobal));
+
+                String[] logs;
+                try {
+                    logs = logger.getLast10Logs(expressServer.conGlobal);
+                } catch (LoggingException e) {
+                    throw new RuntimeException(e);
+                }
+
+                JSONArray arr = new JSONArray();
+
+                for (int i = 0; i < logs.length; i++) {
+                    arr.put(logs[i]);
+                }
+
+                obj.put ("logs", arr);
+
+                exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+                exchange.getResponseSender().send(obj.toString());
+            }
+        });
+    }
+}
+
+class PostLogs implements HttpHandler {
+
+    @Override
+    public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
+
+        HttpString method = exchange.getRequestMethod();
+
+        if (!method.equalToString("POST")) {
+            exchange.setStatusCode(405);
+            return;
+        }
+
+        exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
+            @Override
+            public void handle(HttpServerExchange exchange, byte[] message) {
+                String body = new String(message);
+
+                int secLvl = ServerCommons.checkSession(body);
+
+                if (secLvl == 0 /*&& !extendSession(body)*/) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send("login");
+                    return;
+                }
+
+                String[] logs;
+
+                try {
+                    logs = logger.getAllLogs(expressServer.conGlobal);
+                } catch (LoggingException e) {
+                    throw new RuntimeException(e);
+                }
+
+                String solidLogs = "";
+
+                for (int i = 0; i < logs.length; i++) {
+                    solidLogs += logs[i] + "\n";
+                }
+
+                exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                exchange.getResponseSender().send(solidLogs);
+            }
+        });
+    }
+}
+
+class PostLogin implements HttpHandler {
+
+    @Override
+    public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
+
+        HttpString method = exchange.getRequestMethod();
+
+        if (!method.equalToString("POST")) {
+            exchange.setStatusCode(405);
+            return;
+        }
+
+        exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
+            @Override
+            public void handle(HttpServerExchange exchange, byte[] message) {
+                String body = new String(message);
+
+                List<playerInfo> onlinePlayers = new ArrayList<playerInfo> ();
+
+                Server server = expressServer.pluginGlobal.getServer();
+
+                BufferedImage img = null;
+
+                String b64Img = null;
+
+                File iconFile = new File ("server-icon.png");
+                if (iconFile.exists() && !iconFile.isDirectory()) {
+                    try {
+                        img = ImageIO.read(iconFile);
+
+                        ByteArrayOutputStream os = new ByteArrayOutputStream();
+                        ImageIO.write(img, "png", os);
+
+                        b64Img = Base64.getEncoder().encodeToString(os.toByteArray());
+                    } catch (IOException e) {
+                        b64Img = "none";
+                    }
+                } else {
+                    b64Img = "none";
+                }
+
+                onlinePlayers.addAll(Arrays.asList(playerslist.getPlayers(expressServer.pluginGlobal)));
+                //offlinePlayers.addAll(Arrays.asList(offlineplayerslist.getOfflinePlayers(expressServer.pluginGlobal)));
+
+                JSONObject obj = new JSONObject();
+                obj.put ("players", onlinePlayers.size() + "/" + server.getMaxPlayers());
+                obj.put ("serverType", "bukkit");
+                obj.put ("icon", b64Img);
+
+                try {
+                    String generatedSessionKey = session.createSession(body);
+                    obj.put ("sessionKey", generatedSessionKey);
+
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+                    exchange.getResponseSender().send(obj.toString());
+                } catch (CreateSessionException e) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send(e.getMessage());
+                }
+            }
+        });
+    }
+}
+
+class PostAuthKey implements HttpHandler {
+
+    @Override
+    public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
+
+        HttpString method = exchange.getRequestMethod();
+
+        if (!method.equalToString("POST")) {
+            exchange.setStatusCode(405);
+            return;
+        }
+
+        exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
+            @Override
+            public void handle(HttpServerExchange exchange, byte[] message) {
+                String body = new String(message);
+
+                if (body.equals(createAuthKeyCommand.accessCode) && !createAuthKeyCommand.actualAuthKey.equals("")) {
+                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
+                    exchange.getResponseSender().send(createAuthKeyCommand.actualAuthKey);
+                }
+            }
+        });
     }
 }
