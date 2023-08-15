@@ -1,6 +1,5 @@
 package org.mcadminToolkit;
 
-import com.sun.net.httpserver.HttpsConfigurator;
 import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.io.Receiver;
@@ -10,11 +9,6 @@ import io.undertow.util.Headers;
 import io.undertow.util.HttpString;
 import nl.altindag.ssl.SSLFactory;
 import nl.altindag.ssl.util.PemUtils;
-import express.DynExpress;
-import express.Express;
-import express.http.RequestMethod;
-import express.http.request.Request;
-import express.http.response.Response;
 
 import javax.imageio.ImageIO;
 import javax.net.ssl.SSLContext;
@@ -46,8 +40,6 @@ import org.mcadminToolkit.sqlHandler.LoggingException;
 import org.mcadminToolkit.sqlHandler.logger;
 import org.mcadminToolkit.whitelist.whitelist;
 
-import static org.mcadminToolkit.express.utils.middleware.Middleware.cors;
-
 public class expressServer {
     public static JavaPlugin pluginGlobal;
     public static Connection conGlobal;
@@ -56,14 +48,6 @@ public class expressServer {
 
         pluginGlobal = plugin;
         conGlobal = con;
-        //Path cert = new File("cert.pem").toPath();
-        //Path key = new File("key.pem").toPath();
-
-        /*ClassLoader classloader = Thread.currentThread().getContextClassLoader();
-        InputStream cert = classloader.getResourceAsStream("rootCA.crt");
-        InputStream key = classloader.getResourceAsStream("rootCA.key");*/
-
-
 
         X509ExtendedKeyManager keyManager = PemUtils.loadIdentityMaterial(FileSystems.getDefault().getPath("./plugins/MCAdmin-Toolkit-Connector/rootCA.crt"), FileSystems.getDefault().getPath("./plugins/MCAdmin-Toolkit-Connector/rootCA.key"));
 
@@ -75,11 +59,6 @@ public class expressServer {
                 .build();
 
         SSLContext sslContext = sslFactory.getSslContext();
-
-        /*Express app = new Express(new HttpsConfigurator(sslContext));
-        app.bind(new Bindings());
-        app.use(cors ());
-        app.listen(port);*/
 
         Undertow server = Undertow.builder()
                 .addHttpsListener(port, "0.0.0.0", sslContext)
@@ -107,55 +86,8 @@ public class expressServer {
         server.start();
 
         plugin.getLogger().info("Server https initialized successfully");
-        //undertowTest();
     }
-
-    /*public static void undertowTest () {
-        X509ExtendedKeyManager keyManager = PemUtils.loadIdentityMaterial(FileSystems.getDefault().getPath("./plugins/MCAdmin-Toolkit-Connector/rootCA.crt"), FileSystems.getDefault().getPath("./plugins/MCAdmin-Toolkit-Connector/rootCA.key"));
-
-        X509ExtendedTrustManager trustManager = PemUtils.loadTrustMaterial(FileSystems.getDefault().getPath("./plugins/MCAdmin-Toolkit-Connector/rootCA.crt"));
-
-        SSLFactory sslFactory = SSLFactory.builder()
-                .withIdentityMaterial(keyManager)
-                .withTrustMaterial(trustManager)
-                .build();
-
-        SSLContext sslContext = sslFactory.getSslContext();
-
-        Undertow server = Undertow.builder()
-                .addHttpsListener(9090, "127.0.0.1", sslContext)
-                .addHttpListener(8080, "127.0.0.1")
-                .setHandler(Handlers.pathTemplate()
-                        .add("/hello-world", new TestUndertowItemHandler ())
-                )
-                .build();
-        server.start();
-        pluginGlobal.getLogger().info("Undertow server http started");
-    }*/
 }
-
-/*class TestUndertowItemHandler implements HttpHandler {
-
-    @Override
-    public void handleRequest(HttpServerExchange httpServerExchange) throws Exception {
-        HttpString method = httpServerExchange.getRequestMethod();
-
-        if (!method.equalToString("POST")) {
-            httpServerExchange.setStatusCode(405);
-            return;
-        }
-
-        httpServerExchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
-            @Override
-            public void handle(HttpServerExchange exchange, byte[] message) {
-                httpServerExchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                httpServerExchange.getResponseSender().send(new String(message));
-            }
-        });
-
-        httpServerExchange.getResponseSender().send("Hello world");
-    }
-}*/
 
 class ServerCommons {
     static int checkSession (String sessionKey) {

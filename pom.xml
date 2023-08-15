@@ -92,12 +92,6 @@
             <version>7.0.0</version>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>com.github.Simonwep</groupId>
-            <artifactId>java-express</artifactId>
-            <version>0.0.10</version>
-            <scope>compile</scope>
-        </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.xerial/sqlite-jdbc -->
         <dependency>
@@ -128,6 +122,7 @@
             <groupId>io.undertow</groupId>
             <artifactId>undertow-core</artifactId>
             <version>2.3.7.Final</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 
