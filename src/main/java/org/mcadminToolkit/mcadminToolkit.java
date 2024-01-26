@@ -1,18 +1,18 @@
 package org.mcadminToolkit;
 
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.json.JSONObject;
 import org.mcadminToolkit.sqlHandler.*;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.sql.*;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -41,54 +41,53 @@ public final class mcadminToolkit extends JavaPlugin {
         this.getCommand("listAuthKeys").setExecutor(new listAuthKeysCommand());
         this.getCommand("removeAuthKey").setExecutor(new removeAuthKeyCommand());
 
-        File catalog = new File ("./plugins/MCAdmin-Toolkit-Connector");
+        File catalog = plugin.getDataFolder();
 
         if (!catalog.exists()) {
             catalog.mkdir();
         }
 
-        File configFile = new File ("./plugins/MCAdmin-Toolkit-Connector/config.json");
+        // Config ---------------------
 
-        if (!configFile.exists()) {
-            String config = configBuilder.build();
+        saveDefaultConfig();
 
-            try {
-                configFile.createNewFile();
-            } catch (IOException e) {
-                getLogger().warning("Can't create config file");
-                getLogger().warning("Can't start https server - plugin won't work");
-                return;
-            }
+        FileConfiguration config = getConfig();
 
-            try {
-                FileWriter configWriter = new FileWriter(configFile);
-                configWriter.write(config);
-                configWriter.close();
-            } catch (IOException e) {
-                getLogger().warning("Can't write to config file");
-                getLogger().warning("Can't start https server - plugin won't work");
-                return;
-            }
+        int port = config.getInt("port");
+
+        ConfigurationSection yamlCommandLogging = config.getConfigurationSection("commandLogging");
+        ConfigurationSection yamlAppLogging = config.getConfigurationSection("appLogging");
+
+        Set<String> yamlCommandLoggingKeys = yamlCommandLogging.getKeys(false);
+        Set<String> yamlAppLoggingKeys = yamlAppLogging.getKeys(false);
+
+        appLogging = new JSONObject();
+        commandLogging = new JSONObject();
+
+        for (String key : yamlCommandLoggingKeys) {
+            ConfigurationSection command = yamlCommandLogging.getConfigurationSection(key);
+
+            JSONObject commandJson = new JSONObject();
+            commandJson.put("log", command.getBoolean("log"));
+            commandJson.put("push", command.getBoolean("push"));
+
+            commandLogging.put(key, commandJson);
         }
 
-        int port = 0;
+        for (String key : yamlAppLoggingKeys) {
+            ConfigurationSection command = yamlAppLogging.getConfigurationSection(key);
 
-        try {
-            String configText = new String(Files.readAllBytes(Paths.get("./plugins/MCAdmin-Toolkit-Connector/config.json")), StandardCharsets.UTF_8);
+            JSONObject commandJson = new JSONObject();
+            commandJson.put("log", command.getBoolean("log"));
+            commandJson.put("push", command.getBoolean("push"));
 
-            JSONObject config = new JSONObject(configText);
-            port = config.getInt("port");
-
-            commandLogging = config.getJSONObject("commandLogging");
-            appLogging = config.getJSONObject("appLogging");
-        } catch (IOException e) {
-            getLogger().warning("Can't read to config file");
-            getLogger().warning("Can't start https server - plugin won't work");
-            return;
+            appLogging.put(key, commandJson);
         }
 
-        File certFile = new File ("./plugins/MCAdmin-Toolkit-Connector/rootCA.crt");
-        File keyFile = new File("./plugins/MCAdmin-Toolkit-Connector/rootCA.key");
+        // Cert stuff ---------------------
+
+        File certFile = new File (catalog, "rootCA.crt");
+        File keyFile = new File(catalog, "rootCA.key");
 
         if (!certFile.exists() || !keyFile.exists()) {
             getLogger().warning("Can't get cert files");
@@ -97,10 +96,12 @@ public final class mcadminToolkit extends JavaPlugin {
             return;
         }
 
+        // Database stuff ---------------------
+
         //db init
         Connection con = null;
         try{
-            con = sqlConnector.connect("database.db");
+            con = sqlConnector.connect(new File(catalog, "database.db"));
             sqlStructureConstructor.checkStructure(con);
             //express init
             JavaPlugin plugin = mcadminToolkit.getPlugin(mcadminToolkit.class);

@@ -1,0 +1,44 @@
+port: 4096
+
+commandLogging:
+  ban:
+    log: true
+    push: true
+  ban-ip:
+    log: true
+    push: true
+  pardon:
+    log: true
+    push: true
+  pardon-ip:
+    log: true
+    push: true
+  kick:
+    log: true
+    push: false
+  whitelist:
+    log: true
+    push: true
+
+appLogging:
+  ban:
+    log: true
+    push: true
+  banIp:
+    log: true
+    push: true
+  unban:
+    log: true
+    push: true
+  unbanIp:
+    log: true
+    push: true
+  kick:
+    log: true
+    push: false
+  whitelistOnOff:
+    log: true
+    push: true
+  whitelistAddRemovePlayer:
+    log: true
+    push: true

@@ -3,6 +3,7 @@ package org.mcadminToolkit.sqlHandler;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.io.File;
 
 public class sqlConnector {
 
@@ -10,8 +11,8 @@ public class sqlConnector {
 
     static String staticPath = "./plugins/MCAdmin-Toolkit-Connector/";
 
-    public static Connection connect (String filename) {
-        String url = "jdbc:sqlite:" + staticPath + filename;
+    public static Connection connect (File dbFile) {
+        String url = "jdbc:sqlite:" + dbFile.getPath();
 
         Connection con;
 

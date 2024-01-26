@@ -49,9 +49,9 @@ public class expressServer {
         pluginGlobal = plugin;
         conGlobal = con;
 
-        X509ExtendedKeyManager keyManager = PemUtils.loadIdentityMaterial(FileSystems.getDefault().getPath("./plugins/MCAdmin-Toolkit-Connector/rootCA.crt"), FileSystems.getDefault().getPath("./plugins/MCAdmin-Toolkit-Connector/rootCA.key"));
+        X509ExtendedKeyManager keyManager = PemUtils.loadIdentityMaterial(FileSystems.getDefault().getPath(new File (pluginGlobal.getDataFolder(), "rootCA.crt").getPath()), FileSystems.getDefault().getPath(new File (pluginGlobal.getDataFolder(), "rootCA.key").getPath()));
 
-        X509ExtendedTrustManager trustManager = PemUtils.loadTrustMaterial(FileSystems.getDefault().getPath("./plugins/MCAdmin-Toolkit-Connector/rootCA.crt"));
+        X509ExtendedTrustManager trustManager = PemUtils.loadTrustMaterial(FileSystems.getDefault().getPath(new File (pluginGlobal.getDataFolder(), "rootCA.crt").getPath()));
 
         SSLFactory sslFactory = SSLFactory.builder()
                 .withIdentityMaterial(keyManager)
@@ -338,9 +338,9 @@ class PostBan implements HttpHandler {
                     exchange.getResponseSender().send(e.getMessage());
                 }
 
-                boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("ban").getBoolean("log");
+                boolean log = mcadminToolkit.appLogging.getJSONObject("ban").getBoolean("log");
 
-                if (shouldLog) {
+                if (log) {
                     try {
                         logger.createLog(expressServer.conGlobal, logger.Sources.APP, ServerCommons.getSessionLabel(sessionKey), "Banned player " + username);
                     } catch (LoggingException e) {
@@ -402,9 +402,9 @@ class PostBanIP implements HttpHandler {
                     exchange.getResponseSender().send(e.getMessage());
                 }
 
-                boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("banIp").getBoolean("log");
+                boolean log = mcadminToolkit.appLogging.getJSONObject("banIp").getBoolean("log");
 
-                if (shouldLog) {
+                if (log) {
                     try {
                         logger.createLog(expressServer.conGlobal, logger.Sources.APP, ServerCommons.getSessionLabel(sessionKey), "IP banned player " + playerName);
                     } catch (LoggingException e) {
@@ -464,9 +464,9 @@ class PostUnban implements HttpHandler {
                     exchange.getResponseSender().send(e.getMessage());
                 }
 
-                boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("unban").getBoolean("log");
+                boolean log = mcadminToolkit.appLogging.getJSONObject("unban").getBoolean("log");
 
-                if (shouldLog) {
+                if (log) {
                     try {
                         logger.createLog(expressServer.conGlobal, logger.Sources.APP, ServerCommons.getSessionLabel(sessionKey), "Unbanned player " + username);
                     } catch (LoggingException e) {
@@ -526,9 +526,9 @@ class PostUnbanIP implements HttpHandler {
                     exchange.getResponseSender().send(e.getMessage());
                 }
 
-                boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("unbanIp").getBoolean("log");
+                boolean log = mcadminToolkit.appLogging.getJSONObject("unbanIp").getBoolean("log");
 
-                if (shouldLog) {
+                if (log) {
                     try {
                         logger.createLog(expressServer.conGlobal, logger.Sources.APP, ServerCommons.getSessionLabel(sessionKey), "Unbanned ip " + ip);
                     } catch (LoggingException e) {
@@ -589,9 +589,9 @@ class PostKick implements HttpHandler {
                     exchange.getResponseSender().send(e.getMessage());
                 }
 
-                boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("kick").getBoolean("log");
+                boolean log = mcadminToolkit.appLogging.getJSONObject("kick").getBoolean("log");
 
-                if (shouldLog) {
+                if (log) {
                     try {
                         logger.createLog(expressServer.conGlobal, logger.Sources.APP, ServerCommons.getSessionLabel(sessionKey), "Kicked player " + username);
                     } catch (LoggingException e) {
@@ -647,9 +647,9 @@ class PostWhiteOn implements HttpHandler {
                     exchange.getResponseSender().send(e.getMessage());
                 }
 
-                boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("whitelistOnOff").getBoolean("log");
+                boolean log = mcadminToolkit.appLogging.getJSONObject("whitelistOnOff").getBoolean("log");
 
-                if (shouldLog) {
+                if (log) {
                     try {
                         logger.createLog(expressServer.conGlobal, logger.Sources.APP, ServerCommons.getSessionLabel(body), "Enabled whitelist");
                     } catch (LoggingException e) {
@@ -705,9 +705,9 @@ class PostWhiteOff implements HttpHandler {
                     exchange.getResponseSender().send(e.getMessage());
                 }
 
-                boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("whitelistOnOff").getBoolean("log");
+                boolean log = mcadminToolkit.appLogging.getJSONObject("whitelistOnOff").getBoolean("log");
 
-                if (shouldLog) {
+                if (log) {
                     try {
                         logger.createLog(expressServer.conGlobal, logger.Sources.APP, ServerCommons.getSessionLabel(body), "Disabled whitelist");
                     } catch (LoggingException e) {
@@ -769,9 +769,9 @@ class PostWhiteAdd implements HttpHandler {
                     exchange.getResponseSender().send(e.getMessage());
                 }
 
-                boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("whitelistAddRemovePlayer").getBoolean("log");
+                boolean log = mcadminToolkit.appLogging.getJSONObject("whitelistAddRemovePlayer").getBoolean("log");
 
-                if (shouldLog) {
+                if (log) {
                     try {
                         logger.createLog(expressServer.conGlobal, logger.Sources.APP, ServerCommons.getSessionLabel(sessionKey), "Added player " + username + " to whitelist");
                     } catch (LoggingException e) {
@@ -833,9 +833,9 @@ class PostWhiteRemove implements HttpHandler {
                     exchange.getResponseSender().send(e.getMessage());
                 }
 
-                boolean shouldLog = mcadminToolkit.appLogging.getJSONObject("whitelistAddRemovePlayer").getBoolean("log");
+                boolean log = mcadminToolkit.appLogging.getJSONObject("whitelistAddRemovePlayer").getBoolean("log");
 
-                if (shouldLog) {
+                if (log) {
                     try {
                         logger.createLog(expressServer.conGlobal, logger.Sources.APP, ServerCommons.getSessionLabel(sessionKey), "Removed player " + username + " from whitelist");
                     } catch (LoggingException e) {

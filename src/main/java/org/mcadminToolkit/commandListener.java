@@ -28,9 +28,9 @@ public class commandListener implements Listener {
             if (commandName.equals(command)) {
                 JSONObject commandProperties = configuredCommands.getJSONObject(command);
 
-                boolean shouldLog = commandProperties.getBoolean("log");
+                boolean log = commandProperties.getBoolean("log");
 
-                if (shouldLog) {
+                if (log) {
                     try {
                         logger.createLog(expressServer.conGlobal, logger.Sources.MINECRAFT, event.getPlayer().getName(), "Executed command " + message);
                     } catch (LoggingException e) {
@@ -58,9 +58,9 @@ public class commandListener implements Listener {
             if (commandName.equals(command)) {
                 JSONObject commandProperties = configuredCommands.getJSONObject(command);
 
-                boolean shouldLog = commandProperties.getBoolean("log");
+                boolean log = commandProperties.getBoolean("log");
 
-                if (shouldLog) {
+                if (log) {
                     try {
                         logger.createLog(expressServer.conGlobal, logger.Sources.CONSOLE, "SERVER", "Executed command " + message);
                     } catch (LoggingException e) {
