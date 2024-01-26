@@ -11,10 +11,10 @@ import java.sql.*;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.Date;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
+
+import com.waheed.create.certificate.SelfSignedCertificate;
 
 public final class mcadminToolkit extends JavaPlugin {
     public JavaPlugin plugin = this;
@@ -41,7 +41,7 @@ public final class mcadminToolkit extends JavaPlugin {
         this.getCommand("listAuthKeys").setExecutor(new listAuthKeysCommand());
         this.getCommand("removeAuthKey").setExecutor(new removeAuthKeyCommand());
 
-        File catalog = plugin.getDataFolder();
+        File catalog = getDataFolder();
 
         if (!catalog.exists()) {
             catalog.mkdir();
@@ -90,10 +90,56 @@ public final class mcadminToolkit extends JavaPlugin {
         File keyFile = new File(catalog, "rootCA.key");
 
         if (!certFile.exists() || !keyFile.exists()) {
-            getLogger().warning("Can't get cert files");
-            getLogger().warning("Please create cert files and restart server");
-            getLogger().warning("Can't start https server - plugin won't work");
-            return;
+            getLogger().info("Can't get cert files");
+            getLogger().info("Regenerating cert files...");
+
+            try {
+                SelfSignedCertificate selfSignedCertificate = new SelfSignedCertificate(
+                        "RSA",
+                        "CN=" +
+                                config.getString("cn") +
+                                ", O=" +
+                                config.getString("o") +
+                                ", OU=" +
+                                config.getString("ou") +
+                                ", L=" +
+                                config.getString("l") +
+                                ", ST=" +
+                                config.getString("st") +
+                                ", C=" +
+                                config.getString("c"),
+                        config.getInt("certBits")
+                );
+
+                Base64.Encoder encoder = Base64.getEncoder();
+
+                String publicKey = "-----BEGIN CERTIFICATE-----\n";
+                publicKey += encoder.encodeToString(
+                        selfSignedCertificate.cert.getEncoded()
+                );
+                publicKey += "\n-----END CERTIFICATE-----\n";
+
+                FileWriter certWriter = new FileWriter(certFile, false);
+                certWriter.write(publicKey);
+                certWriter.close();
+
+                String privateKey = "-----BEGIN PRIVATE KEY-----\n";
+                privateKey += encoder.encodeToString(
+                        selfSignedCertificate.privateKey.getEncoded()
+                );
+                privateKey += "\n-----END PRIVATE KEY-----\n";
+
+                FileWriter keyWriter = new FileWriter(keyFile, false);
+                keyWriter.write(privateKey);
+                keyWriter.close();
+            } catch (Exception e) {
+                getLogger().warning("Wrong cert configuration or other error occurred while creating default cert files");
+                getLogger().warning(e.getMessage());
+                getLogger().warning("Can't start https server - plugin won't work");
+
+                return;
+            }
+
         }
 
         // Database stuff ---------------------

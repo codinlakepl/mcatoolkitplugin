@@ -42,3 +42,13 @@ appLogging:
   whitelistAddRemovePlayer:
     log: true
     push: true
+
+
+# Auto generated self signed cert
+cn: "example.org"
+o: "example"
+ou: "example"
+l: "Warsaw"
+st: "Mazowieckie"
+c: "PL"
+certBits: 4096
