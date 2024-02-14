@@ -147,8 +147,8 @@ public final class mcadminToolkit extends JavaPlugin {
         //db init
         Connection con = null;
         try{
+            saveResource("database.db", false);
             con = sqlConnector.connect(new File(catalog, "database.db"));
-            sqlStructureConstructor.checkStructure(con);
             //express init
             JavaPlugin plugin = mcadminToolkit.getPlugin(mcadminToolkit.class);
             expressServer.initializeServer(plugin, con, port);
