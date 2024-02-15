@@ -1,5 +1,7 @@
 package org.mcadminToolkit.sqlHandler;
 
+import org.springframework.security.crypto.bcrypt.BCrypt;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -30,6 +32,7 @@ public class accountHandler {
             statement.close();
 
             String password = generatePassword (6);
+            String hashedPass = BCrypt.hashpw(password, BCrypt.gensalt());
 
             statement = con.prepareStatement("INSERT INTO accounts (" +
                     "login," +
@@ -40,7 +43,7 @@ public class accountHandler {
 
             statement.setString(1, login);
             statement.setInt(2, secLvl);
-            statement.setString(3, password);
+            statement.setString(3, hashedPass);
 
             statement.executeUpdate();
 
