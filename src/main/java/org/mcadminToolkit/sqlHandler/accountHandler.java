@@ -9,7 +9,7 @@ import static org.mcadminToolkit.utils.passwordGenerator.generatePassword;
 
 public class accountHandler {
 
-    public static String createAccount (Connection con, String login, int secLvl) throws CreateAccountException, TooLongLoginException, LoginExistsException {
+    public static String createAcc (Connection con, String login, int secLvl) throws CreateAccountException, TooLongLoginException, LoginExistsException {
         PreparedStatement statement;
 
         if (login.length() > 50) {
@@ -50,4 +50,25 @@ public class accountHandler {
             throw new CreateAccountException(e.getMessage());
         }
     }
+
+    // changePass
+    // --- Connection con, String login, String oldPass, String newPass
+    // --- if old pass doesn't match, throw an exception
+    // --- if login didn't exist, throw an exception
+    // --- set new password
+    // --- change requireChange to true
+    // resetPass
+    // --- Connection con, String login
+    // --- generate 6 character long password
+    // --- if login didn't exist, throw an exception
+    // --- set this password
+    // --- change requireChange to true
+    // updateAcc
+    // --- Connection con, String login, int secLvl
+    // --- if login didn't exist, throw an exception
+    // --- set new secLvl
+    // deleteAcc
+    // --- Connection con, String login, int secLvl
+    // --- if login didn't exist, throw an exception
+    // --- deleteAcc
 }
