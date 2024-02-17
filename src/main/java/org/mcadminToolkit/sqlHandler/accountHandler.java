@@ -11,7 +11,7 @@ import static org.mcadminToolkit.utils.passwordGenerator.generatePassword;
 
 public class accountHandler {
 
-    public static String createAcc (Connection con, String login, int secLvl) throws CreateAccountException, TooLongLoginException, LoginExistsException {
+    public static String createAcc (Connection con, String login, int secLvl) throws AccountException, TooLongLoginException, LoginExistsException {
         PreparedStatement statement;
 
         if (login.length() > 50) {
@@ -50,7 +50,7 @@ public class accountHandler {
             return password;
 
         } catch (SQLException e) {
-            throw new CreateAccountException(e.getMessage());
+            throw new AccountException(e.getMessage());
         }
     }
 
@@ -60,6 +60,41 @@ public class accountHandler {
     // --- if login didn't exist, throw an exception
     // --- set new password
     // --- change requireChange to true
+
+    public static void changePass (Connection con, String login, String oldPass, String newPass) throws AccountException, LoginDontExistException, OldPasswordDoesntMatch {
+        PreparedStatement statement;
+
+        try {
+            statement = con.prepareStatement("SELECT * FROM accounts WHERE login = ?");
+            statement.setString(1, login);
+            ResultSet resultSet = statement.executeQuery();
+            if (!resultSet.next()) {
+                statement.close();
+
+                throw new LoginDontExistException();
+            }
+
+            String oldPassHash = resultSet.getString("password");
+            if (!BCrypt.checkpw(oldPass, oldPassHash)) {
+                throw new OldPasswordDoesntMatch();
+            }
+            resultSet.close();
+
+            statement.close();
+
+            statement = con.prepareStatement("UPDATE accounts SET password = ? WHERE login = ?");
+
+            String hashedPass = BCrypt.hashpw(newPass, BCrypt.gensalt());
+
+            statement.setString(1, hashedPass);
+            statement.setString(2, login);
+
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            throw new AccountException(e.getMessage());
+        }
+    }
+
     // resetPass
     // --- Connection con, String login
     // --- generate 6 character long password
