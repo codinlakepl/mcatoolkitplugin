@@ -82,7 +82,7 @@ public class accountHandler {
 
             statement.close();
 
-            statement = con.prepareStatement("UPDATE accounts SET password = ? WHERE login = ?");
+            statement = con.prepareStatement("UPDATE accounts SET password = ?, requireChange = 0 WHERE login = ?");
 
             String hashedPass = BCrypt.hashpw(newPass, BCrypt.gensalt());
 
@@ -106,7 +106,33 @@ public class accountHandler {
     // --- if login didn't exist, throw an exception
     // --- set new secLvl
     // deleteAcc
-    // --- Connection con, String login, int secLvl
+    // --- Connection con, String login
     // --- if login didn't exist, throw an exception
     // --- deleteAcc
+
+    public static void deleteAcc(Connection con, String login) throws LoginDontExistException, AccountException {
+        PreparedStatement statement;
+
+        try {
+            statement = con.prepareStatement("SELECT * FROM accounts WHERE login = ?");
+            statement.setString(1, login);
+            ResultSet resultSet = statement.executeQuery();
+            if (!resultSet.next()) {
+                statement.close();
+
+                throw new LoginDontExistException();
+            }
+
+            resultSet.close();
+            statement.close();
+
+            statement = con.prepareStatement("DELETE FROM accounts WHERE login = ?");
+            statement.setString(1, login);
+
+            statement.executeUpdate();
+
+        } catch (SQLException e) {
+            throw new AccountException(e.getMessage());
+        }
+    }
 }
