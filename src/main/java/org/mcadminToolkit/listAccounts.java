@@ -4,11 +4,11 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
-import org.mcadminToolkit.sqlHandler.AuthKeyListingException;
-import org.mcadminToolkit.sqlHandler.authKeyLister;
+import org.mcadminToolkit.sqlHandler.AccountException;
+import org.mcadminToolkit.sqlHandler.accountHandler;
 import org.mcadminToolkit.sqlHandler.sqlConnector;
 
-public class listAuthKeysCommand implements CommandExecutor {
+public class listAccounts implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -18,21 +18,21 @@ public class listAuthKeysCommand implements CommandExecutor {
             return false;
         }
 
-        String[] labels;
+        String[] logins;
 
         try {
-            labels = authKeyLister.listAuthKeys(sqlConnector.connection);
-        } catch (AuthKeyListingException e) {
+            logins = accountHandler.listAccs(sqlConnector.connection);
+        } catch (AccountException e) {
             sender.sendMessage("An error occurred");
             return false;
         }
 
         String message = "";
 
-        message += "Registered auth keys:\n";
+        message += "Registered accounts:\n";
 
-        for (int i = 0; i < labels.length; i++) {
-            message += labels[i] + "\n";
+        for (int i = 0; i < logins.length; i++) {
+            message += logins[i] + "\n";
         }
 
         sender.sendMessage(message);
