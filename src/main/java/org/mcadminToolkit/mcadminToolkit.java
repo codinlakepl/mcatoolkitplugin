@@ -37,7 +37,7 @@ public final class mcadminToolkit extends JavaPlugin {
         getLogger().info("MCAdmin Toolkit Connector successfully initialized");
         /*this.getCommand("test").setExecutor(new testCommand());
         this.getCommand("whitelistGet").setExecutor(new whitelistGetCommand());*/
-        this.getCommand("createAuthKey").setExecutor(new createAuthKeyCommand());
+        this.getCommand("createAuthKey").setExecutor(new createAccount());
         this.getCommand("listAuthKeys").setExecutor(new listAccounts());
         this.getCommand("removeAuthKey").setExecutor(new removeAuthKeyCommand());
 

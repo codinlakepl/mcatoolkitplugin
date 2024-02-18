@@ -1030,9 +1030,9 @@ class PostAuthKey implements HttpHandler {
             public void handle(HttpServerExchange exchange, byte[] message) {
                 String body = new String(message);
 
-                if (body.equals(createAuthKeyCommand.accessCode) && !createAuthKeyCommand.actualAuthKey.equals("")) {
+                if (body.equals(createAccount.accessCode) && !createAccount.actualAuthKey.equals("")) {
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send(createAuthKeyCommand.actualAuthKey);
+                    exchange.getResponseSender().send(createAccount.actualAuthKey);
                 }
             }
         });
