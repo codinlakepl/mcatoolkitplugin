@@ -4,11 +4,14 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
+import org.mcadminToolkit.sqlHandler.AccountException;
 import org.mcadminToolkit.sqlHandler.AuthKeyRemovingException;
+import org.mcadminToolkit.sqlHandler.LoginDontExistException;
+import org.mcadminToolkit.sqlHandler.accountHandler;
 import org.mcadminToolkit.sqlHandler.sqlConnector;
 import org.mcadminToolkit.sqlHandler.authKeyRemover;
 
-public class removeAuthKeyCommand implements CommandExecutor {
+public class removeAccount implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String alias, String[] args) {
         if (!sender.isOp()) {
@@ -17,20 +20,23 @@ public class removeAuthKeyCommand implements CommandExecutor {
         }
 
         if (args.length < 1) {
-            sender.sendMessage ("Please specify label");
+            sender.sendMessage ("Please specify login");
             return false;
         }
 
-        String label = args[0];
+        String login = args[0];
 
         try {
-            authKeyRemover.removeAuthKey(sqlConnector.connection, label);
-        } catch (AuthKeyRemovingException e) {
-            sender.sendMessage("Cannot remove auth key with label that don't exists");
+            accountHandler.deleteAcc(sqlConnector.connection, login);
+        } catch (AccountException e) {
+            sender.sendMessage("An error occurred");
+            return false;
+        } catch (LoginDontExistException e) {
+            sender.sendMessage("Cannot remove account that doesn't exist");
             return false;
         }
 
-        sender.sendMessage("Successfully removed auth key with label '" + label + "'");
+        sender.sendMessage("Successfully removed account with login '" + login + "'");
 
         return true;
     }

@@ -39,7 +39,7 @@ public final class mcadminToolkit extends JavaPlugin {
         this.getCommand("whitelistGet").setExecutor(new whitelistGetCommand());*/
         this.getCommand("createAuthKey").setExecutor(new createAccount());
         this.getCommand("listAuthKeys").setExecutor(new listAccounts());
-        this.getCommand("removeAuthKey").setExecutor(new removeAuthKeyCommand());
+        this.getCommand("removeAuthKey").setExecutor(new removeAccount());
 
         File catalog = getDataFolder();
 
