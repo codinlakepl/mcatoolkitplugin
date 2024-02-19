@@ -157,4 +157,24 @@ public class accountHandler {
             throw new AccountException(e.getMessage());
         }
     }
+
+    public static int checkIfAccountExist (Connection con, String login) throws AccountException {
+        PreparedStatement statement;
+
+        try {
+            statement = con.prepareStatement("SELECT secLvl FROM accounts WHERE login = ?");
+
+            statement.setString(1, login);
+
+            ResultSet resultSet = statement.executeQuery();
+
+            if (!resultSet.next()) {
+                return -1;
+            }
+
+            return resultSet.getInt(1);
+        } catch (SQLException e) {
+            throw new AccountException(e.getMessage());
+        }
+    }
 }

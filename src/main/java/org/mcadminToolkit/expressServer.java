@@ -24,7 +24,7 @@ import org.bukkit.Server;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.mcadminToolkit.auth.CreateSessionException;
+import org.mcadminToolkit.auth.CreateAccountException;
 import org.mcadminToolkit.auth.NoSessionException;
 import org.mcadminToolkit.auth.SessionExpirationException;
 import org.mcadminToolkit.auth.session;
@@ -1003,7 +1003,7 @@ class PostLogin implements HttpHandler {
 
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
                     exchange.getResponseSender().send(obj.toString());
-                } catch (CreateSessionException e) {
+                } catch (CreateAccountException e) {
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
                     exchange.getResponseSender().send(e.getMessage());
                 }

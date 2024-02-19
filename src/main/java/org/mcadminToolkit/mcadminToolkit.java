@@ -4,6 +4,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.json.JSONObject;
+import org.mcadminToolkit.auth.jwtHandler;
 import org.mcadminToolkit.sqlHandler.*;
 
 import java.io.*;
@@ -151,6 +152,7 @@ public final class mcadminToolkit extends JavaPlugin {
             con = sqlConnector.connect(new File(catalog, "database.db"));
             //express init
             JavaPlugin plugin = mcadminToolkit.getPlugin(mcadminToolkit.class);
+            jwtHandler.initializeJWT();
             expressServer.initializeServer(plugin, con, port);
         }catch (Exception e) {
             System.out.println(e);

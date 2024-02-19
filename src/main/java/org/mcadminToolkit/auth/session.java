@@ -64,7 +64,7 @@ public class session {
         throw new NoSessionException();
     }
 
-    public static String createSession (String authKey) throws CreateSessionException {
+    public static String createSession (String authKey) throws CreateAccountException {
 
         account acc = authKeyChecker.checkAuthKey(sqlConnector.connection, authKey);
 
@@ -75,7 +75,7 @@ public class session {
             return sessionKey;
         }
 
-        throw new CreateSessionException();
+        throw new CreateAccountException();
     }
 
     public static void extendSession (int sessionIndex) throws NoSessionException {

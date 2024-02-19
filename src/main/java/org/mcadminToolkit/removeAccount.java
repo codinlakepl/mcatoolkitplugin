@@ -5,11 +5,9 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
 import org.mcadminToolkit.sqlHandler.AccountException;
-import org.mcadminToolkit.sqlHandler.AuthKeyRemovingException;
 import org.mcadminToolkit.sqlHandler.LoginDontExistException;
 import org.mcadminToolkit.sqlHandler.accountHandler;
 import org.mcadminToolkit.sqlHandler.sqlConnector;
-import org.mcadminToolkit.sqlHandler.authKeyRemover;
 
 public class removeAccount implements CommandExecutor {
     @Override
