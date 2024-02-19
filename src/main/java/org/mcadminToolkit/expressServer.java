@@ -25,9 +25,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.mcadminToolkit.auth.CreateAccountException;
-import org.mcadminToolkit.auth.NoSessionException;
-import org.mcadminToolkit.auth.SessionExpirationException;
-import org.mcadminToolkit.auth.session;
+import org.mcadminToolkit.auth.InvalidSessionException;
+import org.mcadminToolkit.auth.account;
+import org.mcadminToolkit.auth.jwtHandler;
 import org.mcadminToolkit.banlist.banlist;
 import org.mcadminToolkit.playermanagement.kick;
 import org.mcadminToolkit.playerslist.offlineplayerslist;
@@ -90,40 +90,25 @@ public class expressServer {
 }
 
 class ServerCommons {
-    static int checkSession (String sessionKey) {
+    static account checkSession (String authHeader) {
 
-        int secLvl;
+        account acc;
 
-        try {
-            secLvl = session.isSessionActive(session.getSessionIndex(sessionKey));
-        } catch (NoSessionException | SessionExpirationException e) {
-            return 0;
+        String[] authSplit = authHeader.split(" ");
+
+        if (authSplit.length < 2 || authSplit[0] != "Bearer") {
+            return null;
         }
 
-        return secLvl;
-    }
-
-    static String getSessionLabel (String sessionKey) {
-
-        String label;
+        String token = authSplit[1];
 
         try {
-            label = session.getSessionLabel(session.getSessionIndex(sessionKey));
-        } catch (NoSessionException | SessionExpirationException e) {
-            return "";
+            acc = jwtHandler.verifyToken(token);
+        } catch (InvalidSessionException e) {
+            return null;
         }
 
-        return label;
-    }
-
-    static boolean extendSession (String sessionKey) {
-        try {
-            session.extendSession(session.getSessionIndex(sessionKey));
-        } catch (NoSessionException e) {
-            return false;
-        }
-
-        return true;
+        return acc;
     }
 }
 
@@ -149,13 +134,14 @@ class PostWhitelist implements HttpHandler {
         exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
             @Override
             public void handle(HttpServerExchange exchange, byte[] message) {
-                String body = new String(message);
 
-                int secLvl = ServerCommons.checkSession(body);
+                String authHeader = exchange.getRequestHeaders().get("Authorization").toString();
+
+                account acc = ServerCommons.checkSession(authHeader);
 
                 // request to login if user isn't logged in or, extedning session time failed
                 // input text: session key
-                if (secLvl == 0 /*&& !extendSession(body)*/) {
+                if (acc == null /*&& !extendSession(body)*/) {
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
                     exchange.getResponseSender().send("login");
                     return;
@@ -196,12 +182,11 @@ class PostPlayers implements HttpHandler {
         exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
             @Override
             public void handle(HttpServerExchange exchange, byte[] message) {
-                String body = new String(message);
+                String authHeader = exchange.getRequestHeaders().get("Authorization").toString();
 
-                // input text: session key
-                int secLvl = ServerCommons.checkSession(body);
+                account acc = ServerCommons.checkSession(authHeader);
 
-                if (secLvl == 0 /*&& !extendSession(body)*/) {
+                if (acc == null /*&& !extendSession(body)*/) {
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
                     exchange.getResponseSender().send("login");
                     return;
@@ -258,11 +243,11 @@ class PostBanlist implements HttpHandler {
         exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
             @Override
             public void handle(HttpServerExchange exchange, byte[] message) {
-                String body = new String(message);
-                // input text: session key
-                int secLvl = ServerCommons.checkSession(body);
+                String authHeader = exchange.getRequestHeaders().get("Authorization").toString();
 
-                if (secLvl == 0 /*&& !extendSession(body)*/) {
+                account acc = ServerCommons.checkSession(authHeader);
+
+                if (acc == null /*&& !extendSession(body)*/) {
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
                     exchange.getResponseSender().send("login");
                     return;
@@ -306,23 +291,24 @@ class PostBan implements HttpHandler {
             public void handle(HttpServerExchange exchange, byte[] message) {
                 String body = new String(message);
 
-                JSONObject json = new JSONObject(body); // {"username": "IpyZ", "reason": "test123", "hours": 2 "sessionKey": "test"}
+                JSONObject json = new JSONObject(body); // {"username": "IpyZ", "reason": "test123", "hours": 2}
 
                 // input json: username, sessionKey, reason, hours
                 String username = json.getString("username");
-                String sessionKey = json.getString("sessionKey");
                 String reason = json.getString("reason");
                 int hours = json.getInt("hours");
 
-                int secLvl = ServerCommons.checkSession(sessionKey);
+                String authHeader = exchange.getRequestHeaders().get("Authorization").toString();
 
-                if (secLvl == 0 && !ServerCommons.extendSession(sessionKey)) {
+                account acc = ServerCommons.checkSession(authHeader);
+
+                if (acc == null) {
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
                     exchange.getResponseSender().send("login");
                     return;
                 }
 
-                if (!(secLvl <= 4)) {
+                if (!(acc.secLevel <= 4)) {
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
                     exchange.getResponseSender().send("perms");
                     return;
@@ -342,7 +328,7 @@ class PostBan implements HttpHandler {
 
                 if (log) {
                     try {
-                        logger.createLog(expressServer.conGlobal, logger.Sources.APP, ServerCommons.getSessionLabel(sessionKey), "Banned player " + username);
+                        logger.createLog(expressServer.conGlobal, logger.Sources.APP, acc.label, "Banned player " + username);
                     } catch (LoggingException e) {
                         throw new RuntimeException(e);
                     }
@@ -370,22 +356,23 @@ class PostBanIP implements HttpHandler {
             public void handle(HttpServerExchange exchange, byte[] message) {
                 String body = new String(message);
 
-                JSONObject json = new JSONObject(body); // {"ip": "127.0.0.1", "sessionKey": "test"}
+                JSONObject json = new JSONObject(body); // {"ip": "127.0.0.1"}
 
                 // input json: username, sessionKey, reason
                 String playerName = json.getString("username");
-                String sessionKey = json.getString("sessionKey");
                 String reason = json.getString("reason");
 
-                int secLvl = ServerCommons.checkSession(sessionKey);
+                String authHeader = exchange.getRequestHeaders().get("Authorization").toString();
 
-                if (secLvl == 0 && !ServerCommons.extendSession(sessionKey)) {
+                account acc = ServerCommons.checkSession(authHeader);
+
+                if (acc == null) {
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
                     exchange.getResponseSender().send("login");
                     return;
                 }
 
-                if (!(secLvl <= 2)) {
+                if (!(acc.secLevel <= 2)) {
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
                     exchange.getResponseSender().send("perms");
                     return;
@@ -406,7 +393,7 @@ class PostBanIP implements HttpHandler {
 
                 if (log) {
                     try {
-                        logger.createLog(expressServer.conGlobal, logger.Sources.APP, ServerCommons.getSessionLabel(sessionKey), "IP banned player " + playerName);
+                        logger.createLog(expressServer.conGlobal, logger.Sources.APP, acc.label, "IP banned player " + playerName);
                     } catch (LoggingException e) {
                         throw new RuntimeException(e);
                     }
@@ -434,21 +421,22 @@ class PostUnban implements HttpHandler {
             public void handle(HttpServerExchange exchange, byte[] message) {
                 String body = new String(message);
 
-                JSONObject json = new JSONObject(body); // {"username": "IpyZ", "sessionKey": "test"}
+                JSONObject json = new JSONObject(body); // {"username": "IpyZ"}
 
                 // input json: username, sessionKey
                 String username = json.getString("username");
-                String sessionKey = json.getString("sessionKey");
 
-                int secLvl = ServerCommons.checkSession(sessionKey);
+                String authHeader = exchange.getRequestHeaders().get("Authorization").toString();
 
-                if (secLvl == 0 && !ServerCommons.extendSession(sessionKey)) {
+                account acc = ServerCommons.checkSession(authHeader);
+
+                if (acc == null) {
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
                     exchange.getResponseSender().send("login");
                     return;
                 }
 
-                if (!(secLvl <= 4)) {
+                if (!(acc.secLevel <= 4)) {
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
                     exchange.getResponseSender().send("perms");
                     return;
@@ -468,7 +456,7 @@ class PostUnban implements HttpHandler {
 
                 if (log) {
                     try {
-                        logger.createLog(expressServer.conGlobal, logger.Sources.APP, ServerCommons.getSessionLabel(sessionKey), "Unbanned player " + username);
+                        logger.createLog(expressServer.conGlobal, logger.Sources.APP, acc.label, "Unbanned player " + username);
                     } catch (LoggingException e) {
                         throw new RuntimeException(e);
                     }
@@ -496,21 +484,22 @@ class PostUnbanIP implements HttpHandler {
             public void handle(HttpServerExchange exchange, byte[] message) {
                 String body = new String(message);
 
-                JSONObject json = new JSONObject(body); // {"ip": "127.0.0.1", "sessionKey": "test"}
+                JSONObject json = new JSONObject(body); // {"ip": "127.0.0.1"}
 
                 // input json: ip, sessionKey
                 String ip = json.getString("ip");
-                String sessionKey = json.getString("sessionKey");
 
-                int secLvl = ServerCommons.checkSession(sessionKey);
+                String authHeader = exchange.getRequestHeaders().get("Authorization").toString();
 
-                if (secLvl == 0 && !ServerCommons.extendSession(sessionKey)) {
+                account acc = ServerCommons.checkSession(authHeader);
+
+                if (acc == null) {
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
                     exchange.getResponseSender().send("login");
                     return;
                 }
 
-                if (!(secLvl <= 2)) {
+                if (!(acc.secLevel <= 2)) {
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
                     exchange.getResponseSender().send("perms");
                     return;
@@ -530,7 +519,7 @@ class PostUnbanIP implements HttpHandler {
 
                 if (log) {
                     try {
-                        logger.createLog(expressServer.conGlobal, logger.Sources.APP, ServerCommons.getSessionLabel(sessionKey), "Unbanned ip " + ip);
+                        logger.createLog(expressServer.conGlobal, logger.Sources.APP, acc.label, "Unbanned ip " + ip);
                     } catch (LoggingException e) {
                         throw new RuntimeException(e);
                     }
@@ -558,22 +547,24 @@ class PostKick implements HttpHandler {
             public void handle(HttpServerExchange exchange, byte[] message) {
                 String body = new String(message);
 
-                JSONObject json = new JSONObject(body); // {"username": "IpyZ", "reason": "test123", "sessionKey": "test"}
+                JSONObject json = new JSONObject(body); // {"username": "IpyZ", "reason": "test123"}
 
                 // input json: username, sessionKey, reason
                 String username = json.getString("username");
                 String sessionKey = json.getString("sessionKey");
                 String reason = json.getString("reason");
 
-                int secLvl = ServerCommons.checkSession(sessionKey);
+                String authHeader = exchange.getRequestHeaders().get("Authorization").toString();
 
-                if (secLvl == 0 && !ServerCommons.extendSession(sessionKey)) {
+                account acc = ServerCommons.checkSession(authHeader);
+
+                if (acc == null) {
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
                     exchange.getResponseSender().send("login");
                     return;
                 }
 
-                if (!(secLvl <= 5)) {
+                if (!(acc.secLevel <= 5)) {
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
                     exchange.getResponseSender().send("perms");
                     return;
@@ -593,7 +584,7 @@ class PostKick implements HttpHandler {
 
                 if (log) {
                     try {
-                        logger.createLog(expressServer.conGlobal, logger.Sources.APP, ServerCommons.getSessionLabel(sessionKey), "Kicked player " + username);
+                        logger.createLog(expressServer.conGlobal, logger.Sources.APP, acc.label, "Kicked player " + username);
                     } catch (LoggingException e) {
                         throw new RuntimeException(e);
                     }
@@ -619,17 +610,17 @@ class PostWhiteOn implements HttpHandler {
         exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
             @Override
             public void handle(HttpServerExchange exchange, byte[] message) {
-                String body = new String(message);
+                String authHeader = exchange.getRequestHeaders().get("Authorization").toString();
 
-                int secLvl = ServerCommons.checkSession(body);
+                account acc = ServerCommons.checkSession(authHeader);
 
-                if (secLvl == 0 && !ServerCommons.extendSession(body)) {
+                if (acc == null) {
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
                     exchange.getResponseSender().send("login");
                     return;
                 }
 
-                if (!(secLvl <= 5)) {
+                if (!(acc.secLevel <= 5)) {
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
                     exchange.getResponseSender().send("perms");
                     return;
@@ -651,7 +642,7 @@ class PostWhiteOn implements HttpHandler {
 
                 if (log) {
                     try {
-                        logger.createLog(expressServer.conGlobal, logger.Sources.APP, ServerCommons.getSessionLabel(body), "Enabled whitelist");
+                        logger.createLog(expressServer.conGlobal, logger.Sources.APP, acc.label, "Enabled whitelist");
                     } catch (LoggingException e) {
                         throw new RuntimeException(e);
                     }
@@ -677,17 +668,17 @@ class PostWhiteOff implements HttpHandler {
         exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
             @Override
             public void handle(HttpServerExchange exchange, byte[] message) {
-                String body = new String(message);
+                String authHeader = exchange.getRequestHeaders().get("Authorization").toString();
 
-                int secLvl = ServerCommons.checkSession(body);
+                account acc = ServerCommons.checkSession(authHeader);
 
-                if (secLvl == 0 && !ServerCommons.extendSession(body)) {
+                if (acc == null) {
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
                     exchange.getResponseSender().send("login");
                     return;
                 }
 
-                if (!(secLvl <= 5)) {
+                if (!(acc.secLevel <= 5)) {
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
                     exchange.getResponseSender().send("perms");
                     return;
@@ -709,7 +700,7 @@ class PostWhiteOff implements HttpHandler {
 
                 if (log) {
                     try {
-                        logger.createLog(expressServer.conGlobal, logger.Sources.APP, ServerCommons.getSessionLabel(body), "Disabled whitelist");
+                        logger.createLog(expressServer.conGlobal, logger.Sources.APP, acc.label, "Disabled whitelist");
                     } catch (LoggingException e) {
                         throw new RuntimeException(e);
                     }
@@ -737,21 +728,22 @@ class PostWhiteAdd implements HttpHandler {
             public void handle(HttpServerExchange exchange, byte[] message) {
                 String body = new String(message);
 
-                JSONObject json = new JSONObject(body); // {"username": "IpyZ", "sessionKey": "test"}
+                JSONObject json = new JSONObject(body); // {"username": "IpyZ"}
 
                 // input json: username, sessionKey
                 String username = json.getString("username");
-                String sessionKey = json.getString("sessionKey");
 
-                int secLvl = ServerCommons.checkSession(sessionKey);
+                String authHeader = exchange.getRequestHeaders().get("Authorization").toString();
 
-                if (secLvl == 0 && !ServerCommons.extendSession(sessionKey)) {
+                account acc = ServerCommons.checkSession(authHeader);
+
+                if (acc == null) {
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
                     exchange.getResponseSender().send("login");
                     return;
                 }
 
-                if (!(secLvl <= 5)) {
+                if (!(acc.secLevel <= 5)) {
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
                     exchange.getResponseSender().send("perms");
                     return;
@@ -773,7 +765,7 @@ class PostWhiteAdd implements HttpHandler {
 
                 if (log) {
                     try {
-                        logger.createLog(expressServer.conGlobal, logger.Sources.APP, ServerCommons.getSessionLabel(sessionKey), "Added player " + username + " to whitelist");
+                        logger.createLog(expressServer.conGlobal, logger.Sources.APP, acc.label, "Added player " + username + " to whitelist");
                     } catch (LoggingException e) {
                         throw new RuntimeException(e);
                     }
@@ -801,21 +793,22 @@ class PostWhiteRemove implements HttpHandler {
             public void handle(HttpServerExchange exchange, byte[] message) {
                 String body = new String(message);
 
-                JSONObject json = new JSONObject(body); // {"username": "IpyZ", "sessionKey": "test"}
+                JSONObject json = new JSONObject(body); // {"username": "IpyZ"}
 
                 // input json: username, sessionKey
                 String username = json.getString("username");
-                String sessionKey = json.getString("sessionKey");
 
-                int secLvl = ServerCommons.checkSession(sessionKey);
+                String authHeader = exchange.getRequestHeaders().get("Authorization").toString();
 
-                if (secLvl == 0 && !ServerCommons.extendSession(sessionKey)) {
+                account acc = ServerCommons.checkSession(authHeader);
+
+                if (acc == null) {
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
                     exchange.getResponseSender().send("login");
                     return;
                 }
 
-                if (!(secLvl <= 5)) {
+                if (!(acc.secLevel <= 5)) {
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
                     exchange.getResponseSender().send("perms");
                     return;
@@ -837,7 +830,7 @@ class PostWhiteRemove implements HttpHandler {
 
                 if (log) {
                     try {
-                        logger.createLog(expressServer.conGlobal, logger.Sources.APP, ServerCommons.getSessionLabel(sessionKey), "Removed player " + username + " from whitelist");
+                        logger.createLog(expressServer.conGlobal, logger.Sources.APP, acc.label, "Removed player " + username + " from whitelist");
                     } catch (LoggingException e) {
                         throw new RuntimeException(e);
                     }
@@ -863,11 +856,11 @@ class PostStats implements HttpHandler {
         exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
             @Override
             public void handle(HttpServerExchange exchange, byte[] message) {
-                String body = new String(message);
+                String authHeader = exchange.getRequestHeaders().get("Authorization").toString();
 
-                int secLvl = ServerCommons.checkSession(body);
+                account acc = ServerCommons.checkSession(authHeader);
 
-                if (secLvl == 0 /*&& !extendSession(body)*/) {
+                if (acc == null /*&& !extendSession(body)*/) {
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
                     exchange.getResponseSender().send("login");
                     return;
@@ -916,11 +909,11 @@ class PostLogs implements HttpHandler {
         exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
             @Override
             public void handle(HttpServerExchange exchange, byte[] message) {
-                String body = new String(message);
+                String authHeader = exchange.getRequestHeaders().get("Authorization").toString();
 
-                int secLvl = ServerCommons.checkSession(body);
+                account acc = ServerCommons.checkSession(authHeader);
 
-                if (secLvl == 0 /*&& !extendSession(body)*/) {
+                if (acc == null /*&& !extendSession(body)*/) {
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
                     exchange.getResponseSender().send("login");
                     return;
@@ -963,7 +956,7 @@ class PostLogin implements HttpHandler {
         exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
             @Override
             public void handle(HttpServerExchange exchange, byte[] message) {
-                String body = new String(message);
+                String authHeader = exchange.getRequestHeaders().get("Authorization").toString();
 
                 List<playerInfo> onlinePlayers = new ArrayList<playerInfo> ();
 
@@ -998,7 +991,8 @@ class PostLogin implements HttpHandler {
                 obj.put ("icon", b64Img);
 
                 try {
-                    String generatedSessionKey = session.createSession(body);
+                    // todo login hasło w kurwa logowaniu, japierodle XD
+                    String generatedSessionKey = jwtHandler.generateToken(expressServer.conGlobal, );
                     obj.put ("sessionKey", generatedSessionKey);
 
                     exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
