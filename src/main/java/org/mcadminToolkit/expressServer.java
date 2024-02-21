@@ -163,11 +163,10 @@ class PostWhitelist implements HttpHandler {
 
                 account acc = ServerCommons.checkSession(authHeader);
 
-                // request to login if user isn't logged in or, extedning session time failed
-                // input text: session key
-                if (acc == null /*&& !extendSession(body)*/) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send("login");
+
+                if (acc == null) {
+                    exchange.setStatusCode(401);
+                    exchange.getResponseSender().send("");
                     return;
                 }
 
@@ -210,9 +209,9 @@ class PostPlayers implements HttpHandler {
 
                 account acc = ServerCommons.checkSession(authHeader);
 
-                if (acc == null /*&& !extendSession(body)*/) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send("login");
+                if (acc == null) {
+                    exchange.setStatusCode(401);
+                    exchange.getResponseSender().send("");
                     return;
                 }
 
@@ -271,9 +270,9 @@ class PostBanlist implements HttpHandler {
 
                 account acc = ServerCommons.checkSession(authHeader);
 
-                if (acc == null /*&& !extendSession(body)*/) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send("login");
+                if (acc == null) {
+                    exchange.setStatusCode(401);
+                    exchange.getResponseSender().send("");
                     return;
                 }
 
@@ -327,14 +326,14 @@ class PostBan implements HttpHandler {
                 account acc = ServerCommons.checkSession(authHeader);
 
                 if (acc == null) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send("login");
+                    exchange.setStatusCode(401);
+                    exchange.getResponseSender().send("");
                     return;
                 }
 
                 if (!(acc.secLevel <= 4)) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send("perms");
+                    exchange.setStatusCode(403);
+                    exchange.getResponseSender().send("");
                     return;
                 }
 
@@ -391,14 +390,14 @@ class PostBanIP implements HttpHandler {
                 account acc = ServerCommons.checkSession(authHeader);
 
                 if (acc == null) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send("login");
+                    exchange.setStatusCode(401);
+                    exchange.getResponseSender().send("");
                     return;
                 }
 
                 if (!(acc.secLevel <= 2)) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send("perms");
+                    exchange.setStatusCode(403);
+                    exchange.getResponseSender().send("");
                     return;
                 }
 
@@ -455,14 +454,14 @@ class PostUnban implements HttpHandler {
                 account acc = ServerCommons.checkSession(authHeader);
 
                 if (acc == null) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send("login");
+                    exchange.setStatusCode(401);
+                    exchange.getResponseSender().send("");
                     return;
                 }
 
                 if (!(acc.secLevel <= 4)) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send("perms");
+                    exchange.setStatusCode(403);
+                    exchange.getResponseSender().send("");
                     return;
                 }
 
@@ -518,14 +517,14 @@ class PostUnbanIP implements HttpHandler {
                 account acc = ServerCommons.checkSession(authHeader);
 
                 if (acc == null) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send("login");
+                    exchange.setStatusCode(401);
+                    exchange.getResponseSender().send("");
                     return;
                 }
 
                 if (!(acc.secLevel <= 2)) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send("perms");
+                    exchange.setStatusCode(403);
+                    exchange.getResponseSender().send("");
                     return;
                 }
 
@@ -583,14 +582,14 @@ class PostKick implements HttpHandler {
                 account acc = ServerCommons.checkSession(authHeader);
 
                 if (acc == null) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send("login");
+                    exchange.setStatusCode(401);
+                    exchange.getResponseSender().send("");
                     return;
                 }
 
                 if (!(acc.secLevel <= 5)) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send("perms");
+                    exchange.setStatusCode(403);
+                    exchange.getResponseSender().send("");
                     return;
                 }
 
@@ -639,14 +638,14 @@ class PostWhiteOn implements HttpHandler {
                 account acc = ServerCommons.checkSession(authHeader);
 
                 if (acc == null) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send("login");
+                    exchange.setStatusCode(401);
+                    exchange.getResponseSender().send("");
                     return;
                 }
 
                 if (!(acc.secLevel <= 5)) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send("perms");
+                    exchange.setStatusCode(403);
+                    exchange.getResponseSender().send("");
                     return;
                 }
 
@@ -697,14 +696,14 @@ class PostWhiteOff implements HttpHandler {
                 account acc = ServerCommons.checkSession(authHeader);
 
                 if (acc == null) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send("login");
+                    exchange.setStatusCode(401);
+                    exchange.getResponseSender().send("");
                     return;
                 }
 
                 if (!(acc.secLevel <= 5)) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send("perms");
+                    exchange.setStatusCode(403);
+                    exchange.getResponseSender().send("");
                     return;
                 }
 
@@ -762,14 +761,14 @@ class PostWhiteAdd implements HttpHandler {
                 account acc = ServerCommons.checkSession(authHeader);
 
                 if (acc == null) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send("login");
+                    exchange.setStatusCode(401);
+                    exchange.getResponseSender().send("");
                     return;
                 }
 
                 if (!(acc.secLevel <= 5)) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send("perms");
+                    exchange.setStatusCode(403);
+                    exchange.getResponseSender().send("");
                     return;
                 }
 
@@ -827,14 +826,14 @@ class PostWhiteRemove implements HttpHandler {
                 account acc = ServerCommons.checkSession(authHeader);
 
                 if (acc == null) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send("login");
+                    exchange.setStatusCode(401);
+                    exchange.getResponseSender().send("");
                     return;
                 }
 
                 if (!(acc.secLevel <= 5)) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send("perms");
+                    exchange.setStatusCode(403);
+                    exchange.getResponseSender().send("");
                     return;
                 }
 
@@ -884,9 +883,9 @@ class PostStats implements HttpHandler {
 
                 account acc = ServerCommons.checkSession(authHeader);
 
-                if (acc == null /*&& !extendSession(body)*/) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send("login");
+                if (acc == null) {
+                    exchange.setStatusCode(401);
+                    exchange.getResponseSender().send("");
                     return;
                 }
 
@@ -937,9 +936,9 @@ class PostLogs implements HttpHandler {
 
                 account acc = ServerCommons.checkSession(authHeader);
 
-                if (acc == null /*&& !extendSession(body)*/) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send("login");
+                if (acc == null) {
+                    exchange.setStatusCode(401);
+                    exchange.getResponseSender().send("");
                     return;
                 }
 
@@ -991,7 +990,7 @@ class PostLogin implements HttpHandler {
                     exchange.getResponseSender().send("");
                     return;
                 } catch (LoginDontExistException | WrongPasswordException e) {
-                    exchange.setStatusCode(403);
+                    exchange.setStatusCode(401);
                     exchange.getResponseSender().send("");
                     return;
                 }
