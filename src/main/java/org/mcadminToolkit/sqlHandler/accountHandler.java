@@ -14,6 +14,8 @@ import static org.mcadminToolkit.utils.passwordGenerator.generatePassword;
 public class accountHandler {
 
     public static String createAcc (Connection con, String login, int secLvl) throws AccountException, TooLongLoginException, LoginExistsException {
+        // todo make limit on acceptable characters for login
+        // todo make configurable length of generated pass
         PreparedStatement statement;
 
         if (login.length() > 50) {

@@ -98,7 +98,7 @@ class ServerCommons {
 
         String[] authSplit = authHeader.split(" ");
 
-        if (authSplit.length < 2 || authSplit[0] != "Bearer") {
+        if (authSplit.length < 2 || !authSplit[0].equals("Bearer")) {
             return null;
         }
 
@@ -117,13 +117,13 @@ class ServerCommons {
 
         String[] authSplit = authHeader.split(" ");
 
-        if (authSplit.length < 2 || authSplit[0] != "Basic") {
+        if (authSplit.length < 2 || !authSplit[0].equals("Basic")) {
             return null;
         }
 
         String encodedCredentials = authSplit[1];
 
-        String credentials = new String(Base64.getDecoder().decode(encodedCredentials), StandardCharsets.UTF_8);
+        String credentials = new String(Base64.getMimeDecoder().decode(encodedCredentials), StandardCharsets.UTF_8);
 
         int indexOfColon = credentials.indexOf(':');
 
@@ -159,7 +159,7 @@ class PostWhitelist implements HttpHandler {
             @Override
             public void handle(HttpServerExchange exchange, byte[] message) {
 
-                String authHeader = exchange.getRequestHeaders().get("Authorization").toString();
+                String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
                 account acc = ServerCommons.checkSession(authHeader);
 
@@ -205,7 +205,7 @@ class PostPlayers implements HttpHandler {
         exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
             @Override
             public void handle(HttpServerExchange exchange, byte[] message) {
-                String authHeader = exchange.getRequestHeaders().get("Authorization").toString();
+                String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
                 account acc = ServerCommons.checkSession(authHeader);
 
@@ -266,7 +266,7 @@ class PostBanlist implements HttpHandler {
         exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
             @Override
             public void handle(HttpServerExchange exchange, byte[] message) {
-                String authHeader = exchange.getRequestHeaders().get("Authorization").toString();
+                String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
                 account acc = ServerCommons.checkSession(authHeader);
 
@@ -321,7 +321,7 @@ class PostBan implements HttpHandler {
                 String reason = json.getString("reason");
                 int hours = json.getInt("hours");
 
-                String authHeader = exchange.getRequestHeaders().get("Authorization").toString();
+                String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
                 account acc = ServerCommons.checkSession(authHeader);
 
@@ -385,7 +385,7 @@ class PostBanIP implements HttpHandler {
                 String playerName = json.getString("username");
                 String reason = json.getString("reason");
 
-                String authHeader = exchange.getRequestHeaders().get("Authorization").toString();
+                String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
                 account acc = ServerCommons.checkSession(authHeader);
 
@@ -449,7 +449,7 @@ class PostUnban implements HttpHandler {
                 // input json: username, sessionKey
                 String username = json.getString("username");
 
-                String authHeader = exchange.getRequestHeaders().get("Authorization").toString();
+                String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
                 account acc = ServerCommons.checkSession(authHeader);
 
@@ -512,7 +512,7 @@ class PostUnbanIP implements HttpHandler {
                 // input json: ip, sessionKey
                 String ip = json.getString("ip");
 
-                String authHeader = exchange.getRequestHeaders().get("Authorization").toString();
+                String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
                 account acc = ServerCommons.checkSession(authHeader);
 
@@ -577,7 +577,7 @@ class PostKick implements HttpHandler {
                 String sessionKey = json.getString("sessionKey");
                 String reason = json.getString("reason");
 
-                String authHeader = exchange.getRequestHeaders().get("Authorization").toString();
+                String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
                 account acc = ServerCommons.checkSession(authHeader);
 
@@ -633,7 +633,7 @@ class PostWhiteOn implements HttpHandler {
         exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
             @Override
             public void handle(HttpServerExchange exchange, byte[] message) {
-                String authHeader = exchange.getRequestHeaders().get("Authorization").toString();
+                String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
                 account acc = ServerCommons.checkSession(authHeader);
 
@@ -691,7 +691,7 @@ class PostWhiteOff implements HttpHandler {
         exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
             @Override
             public void handle(HttpServerExchange exchange, byte[] message) {
-                String authHeader = exchange.getRequestHeaders().get("Authorization").toString();
+                String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
                 account acc = ServerCommons.checkSession(authHeader);
 
@@ -756,7 +756,7 @@ class PostWhiteAdd implements HttpHandler {
                 // input json: username, sessionKey
                 String username = json.getString("username");
 
-                String authHeader = exchange.getRequestHeaders().get("Authorization").toString();
+                String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
                 account acc = ServerCommons.checkSession(authHeader);
 
@@ -821,7 +821,7 @@ class PostWhiteRemove implements HttpHandler {
                 // input json: username, sessionKey
                 String username = json.getString("username");
 
-                String authHeader = exchange.getRequestHeaders().get("Authorization").toString();
+                String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
                 account acc = ServerCommons.checkSession(authHeader);
 
@@ -879,7 +879,7 @@ class PostStats implements HttpHandler {
         exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
             @Override
             public void handle(HttpServerExchange exchange, byte[] message) {
-                String authHeader = exchange.getRequestHeaders().get("Authorization").toString();
+                String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
                 account acc = ServerCommons.checkSession(authHeader);
 
@@ -932,7 +932,7 @@ class PostLogs implements HttpHandler {
         exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
             @Override
             public void handle(HttpServerExchange exchange, byte[] message) {
-                String authHeader = exchange.getRequestHeaders().get("Authorization").toString();
+                String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
                 account acc = ServerCommons.checkSession(authHeader);
 
@@ -979,7 +979,7 @@ class PostLogin implements HttpHandler {
         exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
             @Override
             public void handle(HttpServerExchange exchange, byte[] message) {
-                String authHeader = exchange.getRequestHeaders().get("Authorization").toString();
+                String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
                 String jwtToken = null;
 
@@ -990,6 +990,12 @@ class PostLogin implements HttpHandler {
                     exchange.getResponseSender().send("");
                     return;
                 } catch (LoginDontExistException | WrongPasswordException e) {
+                    exchange.setStatusCode(401);
+                    exchange.getResponseSender().send("");
+                    return;
+                }
+
+                if (jwtToken == null) {
                     exchange.setStatusCode(401);
                     exchange.getResponseSender().send("");
                     return;

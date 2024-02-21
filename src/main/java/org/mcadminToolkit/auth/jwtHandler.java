@@ -51,7 +51,7 @@ public class jwtHandler {
             .withIssuedAt(new Date())
             .withExpiresAt(new Date(System.currentTimeMillis() + 1800000L))
             .withJWTId(UUID.randomUUID().toString())
-            .withNotBefore(new Date(System.currentTimeMillis() + 60000L))
+            .withNotBefore(new Date(System.currentTimeMillis() - 60000L))
             .sign(algorithm);
 
         return token;
