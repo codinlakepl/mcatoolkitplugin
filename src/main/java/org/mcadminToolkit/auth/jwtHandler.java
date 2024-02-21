@@ -6,10 +6,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import org.mcadminToolkit.sqlHandler.AccountException;
-import org.mcadminToolkit.sqlHandler.LoginDontExistException;
-import org.mcadminToolkit.sqlHandler.WrongPasswordException;
-import org.mcadminToolkit.sqlHandler.accountHandler;
+import org.mcadminToolkit.sqlHandler.*;
 import org.mcadminToolkit.utils.passwordGenerator;
 
 import java.sql.Connection;
@@ -30,7 +27,7 @@ public class jwtHandler {
                 .build();
     }
 
-    public static String generateToken (Connection con, String login, String password) throws LoginDontExistException, CreateAccountException, WrongPasswordException {
+    public static String generateToken (Connection con, String login, String password) throws LoginDontExistException, CreateAccountException, WrongPasswordException, RequirePasswordChangeException {
         int secLvl;
 
         try {

@@ -160,11 +160,11 @@ public class accountHandler {
         }
     }
 
-    public static int checkIfAccountExist (Connection con, String login, String password) throws AccountException, WrongPasswordException {
+    public static int checkIfAccountExist (Connection con, String login, String password) throws AccountException, WrongPasswordException, RequirePasswordChangeException {
         PreparedStatement statement;
 
         try {
-            statement = con.prepareStatement("SELECT secLvl, password FROM accounts WHERE login = ?");
+            statement = con.prepareStatement("SELECT secLvl, password, requireChange FROM accounts WHERE login = ?");
 
             statement.setString(1, login);
 
@@ -178,6 +178,10 @@ public class accountHandler {
 
             if (!BCrypt.checkpw(password, hashedPass)) {
                 throw new WrongPasswordException();
+            }
+
+            if (resultSet.getBoolean(3)) {
+                throw new RequirePasswordChangeException();
             }
 
             return resultSet.getInt(1);

@@ -37,10 +37,7 @@ import org.mcadminToolkit.playerslist.playerslist;
 import org.mcadminToolkit.serverStats.serverStats;
 
 import org.mcadminToolkit.playermanagement.ban;
-import org.mcadminToolkit.sqlHandler.LoggingException;
-import org.mcadminToolkit.sqlHandler.LoginDontExistException;
-import org.mcadminToolkit.sqlHandler.WrongPasswordException;
-import org.mcadminToolkit.sqlHandler.logger;
+import org.mcadminToolkit.sqlHandler.*;
 import org.mcadminToolkit.whitelist.whitelist;
 
 public class expressServer {
@@ -82,6 +79,7 @@ public class expressServer {
                         .add("/STATS", new PostStats())
                         .add("/LOGS", new PostLogs())
                         .add("/LOGIN", new PostLogin())
+                        .add("/CHANGEPASS", new PostChangePassword())
                 )
                 .build();
 
@@ -113,7 +111,7 @@ class ServerCommons {
         return acc;
     }
 
-    static String checkAccount (String authHeader) throws CreateAccountException, LoginDontExistException, WrongPasswordException {
+    static String checkAccount (String authHeader) throws CreateAccountException, LoginDontExistException, WrongPasswordException, RequirePasswordChangeException {
 
         String[] authSplit = authHeader.split(" ");
 
@@ -133,6 +131,27 @@ class ServerCommons {
         String generatedSessionKey = jwtHandler.generateToken(expressServer.conGlobal, login, password);
 
         return generatedSessionKey;
+    }
+
+    static boolean changePass (String authHeader, String newPass) throws AccountException, OldPasswordDoesntMatch, LoginDontExistException {
+        String[] authSplit = authHeader.split(" ");
+
+        if (authSplit.length < 2 || !authSplit[0].equals("Basic")) {
+            return false;
+        }
+
+        String encodedCredentials = authSplit[1];
+
+        String credentials = new String(Base64.getMimeDecoder().decode(encodedCredentials), StandardCharsets.UTF_8);
+
+        int indexOfColon = credentials.indexOf(':');
+
+        String login = credentials.substring(0, indexOfColon);
+        String password = credentials.substring(indexOfColon + 1);
+
+        accountHandler.changePass(expressServer.conGlobal, login, password, newPass);
+
+        return true;
     }
 }
 
@@ -993,6 +1012,8 @@ class PostLogin implements HttpHandler {
                     exchange.setStatusCode(401);
                     exchange.getResponseSender().send("");
                     return;
+                } catch (RequirePasswordChangeException e) {
+                    jwtToken = "change"; // it means that password must be changed
                 }
 
                 if (jwtToken == null) {
@@ -1037,6 +1058,43 @@ class PostLogin implements HttpHandler {
 
                 exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
                 exchange.getResponseSender().send(obj.toString());
+            }
+        });
+    }
+}
+
+class PostChangePassword implements HttpHandler {
+    @Override
+    public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
+
+        HttpString method = exchange.getRequestMethod();
+
+        if (!method.equalToString("POST")) {
+            exchange.setStatusCode(405);
+            return;
+        }
+
+        exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
+            @Override
+            public void handle(HttpServerExchange exchange, byte[] message) {
+                String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
+
+                String body = new String(message);
+
+                JSONObject json = new JSONObject(body); // {"password": "superSecurePassword"}
+
+                try {
+                    ServerCommons.changePass(authHeader, json.getString("password"));
+                } catch (AccountException e) {
+                    exchange.setStatusCode(500);
+                    exchange.getResponseSender().send("");
+                    return;
+                } catch (OldPasswordDoesntMatch | LoginDontExistException e) {
+                    exchange.setStatusCode(401);
+                    exchange.getResponseSender().send("");
+                    return;
+                }
             }
         });
     }
