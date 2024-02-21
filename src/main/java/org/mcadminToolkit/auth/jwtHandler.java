@@ -8,6 +8,7 @@ import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.mcadminToolkit.sqlHandler.AccountException;
 import org.mcadminToolkit.sqlHandler.LoginDontExistException;
+import org.mcadminToolkit.sqlHandler.WrongPasswordException;
 import org.mcadminToolkit.sqlHandler.accountHandler;
 import org.mcadminToolkit.utils.passwordGenerator;
 
@@ -29,11 +30,11 @@ public class jwtHandler {
                 .build();
     }
 
-    public static String generateToken (Connection con, String login) throws LoginDontExistException, CreateAccountException {
+    public static String generateToken (Connection con, String login, String password) throws LoginDontExistException, CreateAccountException, WrongPasswordException {
         int secLvl;
 
         try {
-            secLvl = accountHandler.checkIfAccountExist(con, login);
+            secLvl = accountHandler.checkIfAccountExist(con, login, password);
 
             if (secLvl == -1) {
                 throw new LoginDontExistException();

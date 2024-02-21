@@ -16,6 +16,7 @@ import javax.net.ssl.X509ExtendedKeyManager;
 import javax.net.ssl.X509ExtendedTrustManager;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.sql.Connection;
 import java.time.Duration;
@@ -37,6 +38,8 @@ import org.mcadminToolkit.serverStats.serverStats;
 
 import org.mcadminToolkit.playermanagement.ban;
 import org.mcadminToolkit.sqlHandler.LoggingException;
+import org.mcadminToolkit.sqlHandler.LoginDontExistException;
+import org.mcadminToolkit.sqlHandler.WrongPasswordException;
 import org.mcadminToolkit.sqlHandler.logger;
 import org.mcadminToolkit.whitelist.whitelist;
 
@@ -79,7 +82,6 @@ public class expressServer {
                         .add("/STATS", new PostStats())
                         .add("/LOGS", new PostLogs())
                         .add("/LOGIN", new PostLogin())
-                        .add("/GETAUTHKEY", new PostAuthKey())
                 )
                 .build();
 
@@ -110,12 +112,34 @@ class ServerCommons {
 
         return acc;
     }
+
+    static String checkAccount (String authHeader) throws CreateAccountException, LoginDontExistException, WrongPasswordException {
+
+        String[] authSplit = authHeader.split(" ");
+
+        if (authSplit.length < 2 || authSplit[0] != "Basic") {
+            return null;
+        }
+
+        String encodedCredentials = authSplit[1];
+
+        String credentials = new String(Base64.getDecoder().decode(encodedCredentials), StandardCharsets.UTF_8);
+
+        int indexOfColon = credentials.indexOf(':');
+
+        String login = credentials.substring(0, indexOfColon);
+        String password = credentials.substring(indexOfColon + 1);
+
+        String generatedSessionKey = jwtHandler.generateToken(expressServer.conGlobal, login, password);
+
+        return generatedSessionKey;
+    }
 }
 
 class GetIndex implements HttpHandler {
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
-        exchange.getResponseSender().send("MCAdmin Toolkit API v0.1");
+        exchange.getResponseSender().send("MCAdmin Toolkit API v0.2");
     }
 }
 
@@ -958,6 +982,20 @@ class PostLogin implements HttpHandler {
             public void handle(HttpServerExchange exchange, byte[] message) {
                 String authHeader = exchange.getRequestHeaders().get("Authorization").toString();
 
+                String jwtToken = null;
+
+                try {
+                    jwtToken = ServerCommons.checkAccount(authHeader);
+                } catch (CreateAccountException e) {
+                    exchange.setStatusCode(500);
+                    exchange.getResponseSender().send("");
+                    return;
+                } catch (LoginDontExistException | WrongPasswordException e) {
+                    exchange.setStatusCode(403);
+                    exchange.getResponseSender().send("");
+                    return;
+                }
+
                 List<playerInfo> onlinePlayers = new ArrayList<playerInfo> ();
 
                 Server server = expressServer.pluginGlobal.getServer();
@@ -990,23 +1028,16 @@ class PostLogin implements HttpHandler {
                 obj.put ("serverType", "bukkit");
                 obj.put ("icon", b64Img);
 
-                try {
-                    // todo login hasło w kurwa logowaniu, japierodle XD
-                    String generatedSessionKey = jwtHandler.generateToken(expressServer.conGlobal, );
-                    obj.put ("sessionKey", generatedSessionKey);
+                obj.put ("sessionKey", jwtToken);
 
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-                    exchange.getResponseSender().send(obj.toString());
-                } catch (CreateAccountException e) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send(e.getMessage());
-                }
+                exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+                exchange.getResponseSender().send(obj.toString());
             }
         });
     }
 }
 
-class PostAuthKey implements HttpHandler {
+/*class PostAuthKey implements HttpHandler {
 
     @Override
     public void handleRequest(HttpServerExchange exchange) throws Exception {
@@ -1031,4 +1062,4 @@ class PostAuthKey implements HttpHandler {
             }
         });
     }
-}
+}*/
