@@ -54,6 +54,33 @@ public class jwtHandler {
         return token;
     }
 
+    public static String generateToken (Connection con, int accountId, String login) throws LoginDontExistException, CreateAccountException {
+        int secLvl;
+
+        try {
+            secLvl = accountHandler.checkIfAccountExist(con, accountId);
+
+            if (secLvl == -1) {
+                throw new LoginDontExistException();
+            }
+        } catch (AccountException e) {
+            throw new CreateAccountException(e.getMessage());
+        }
+
+        String token = JWT.create()
+                .withIssuer("CodinLake")
+                .withSubject("MCAdmin-Toolkit")
+                .withClaim("login", login)
+                .withClaim("secLvl", secLvl)
+                .withIssuedAt(new Date())
+                .withExpiresAt(new Date(System.currentTimeMillis() + 1800000L))
+                .withJWTId(UUID.randomUUID().toString())
+                .withNotBefore(new Date(System.currentTimeMillis() - 60000L))
+                .sign(algorithm);
+
+        return token;
+    }
+
     public static account verifyToken (String token) throws InvalidSessionException {
 
         DecodedJWT decodedJWT;

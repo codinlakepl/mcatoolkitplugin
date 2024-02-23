@@ -189,4 +189,24 @@ public class accountHandler {
             throw new AccountException(e.getMessage());
         }
     }
+
+    public static int checkIfAccountExist (Connection con, int accountId) throws AccountException {
+        PreparedStatement statement;
+
+        try {
+            statement = con.prepareStatement("SELECT secLvl FROM accounts WHERE id = ?");
+
+            statement.setInt(1, accountId);
+
+            ResultSet resultSet = statement.executeQuery();
+
+            if (!resultSet.next()) {
+                return -1;
+            }
+
+            return resultSet.getInt(1);
+        } catch (SQLException e) {
+            throw new AccountException(e.getMessage());
+        }
+    }
 }
