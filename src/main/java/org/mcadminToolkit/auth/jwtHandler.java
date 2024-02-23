@@ -27,7 +27,7 @@ public class jwtHandler {
                 .build();
     }
 
-    public static String generateToken (Connection con, String login, String password) throws LoginDontExistException, CreateAccountException, WrongPasswordException, RequirePasswordChangeException {
+    public static String generateToken (Connection con, String login, String password) throws LoginDontExistException, CreateSessionException, WrongPasswordException, RequirePasswordChangeException {
         int secLvl;
 
         try {
@@ -37,7 +37,7 @@ public class jwtHandler {
                 throw new LoginDontExistException();
             }
         } catch (AccountException e) {
-            throw new CreateAccountException(e.getMessage());
+            throw new CreateSessionException(e.getMessage());
         }
 
         String token = JWT.create()
@@ -54,7 +54,7 @@ public class jwtHandler {
         return token;
     }
 
-    public static String generateToken (Connection con, int accountId, String login) throws LoginDontExistException, CreateAccountException {
+    public static String generateToken (Connection con, int accountId, String login) throws LoginDontExistException, CreateSessionException {
         int secLvl;
 
         try {
@@ -64,7 +64,7 @@ public class jwtHandler {
                 throw new LoginDontExistException();
             }
         } catch (AccountException e) {
-            throw new CreateAccountException(e.getMessage());
+            throw new CreateSessionException(e.getMessage());
         }
 
         String token = JWT.create()

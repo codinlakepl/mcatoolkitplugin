@@ -12,7 +12,7 @@ import java.sql.SQLException;
 import java.util.UUID;
 
 public class sessionHandler {
-    public static session createSession (Connection con, String login, String password, String device, String model) throws CreateAccountException, LoginDontExistException, RequirePasswordChangeException, WrongPasswordException {
+    public static session createSession (Connection con, String login, String password, String device, String model) throws CreateSessionException, LoginDontExistException, RequirePasswordChangeException, WrongPasswordException {
         String jwtToken = jwtHandler.generateToken(con, login, password);
         String refreshKey = UUID.randomUUID().toString();
 
@@ -36,13 +36,13 @@ public class sessionHandler {
 
             statement.executeUpdate();
         } catch (SQLException e) {
-            throw new CreateAccountException(e.getMessage());
+            throw new CreateSessionException(e.getMessage());
         }
 
         return new session(refreshKey, jwtToken);
     }
 
-    public static String verifySession (Connection con, String refreshKey) throws InvalidSessionException, AccountException, CreateAccountException, LoginDontExistException {
+    public static String verifySession (Connection con, String refreshKey) throws InvalidSessionException, CreateSessionException, LoginDontExistException {
         PreparedStatement statement;
         int accountId;
         String login;
@@ -67,7 +67,7 @@ public class sessionHandler {
             accountId = resultSet.getInt(1);
             login = resultSet.getString(2);
         } catch (SQLException e) {
-            throw new AccountException(e.getMessage());
+            throw new CreateSessionException(e.getMessage());
         }
 
         return jwtHandler.generateToken(con, accountId, login);

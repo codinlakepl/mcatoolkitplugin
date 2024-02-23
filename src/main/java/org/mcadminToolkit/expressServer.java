@@ -25,10 +25,7 @@ import org.bukkit.Server;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.mcadminToolkit.auth.CreateAccountException;
-import org.mcadminToolkit.auth.InvalidSessionException;
-import org.mcadminToolkit.auth.account;
-import org.mcadminToolkit.auth.jwtHandler;
+import org.mcadminToolkit.auth.*;
 import org.mcadminToolkit.banlist.banlist;
 import org.mcadminToolkit.playermanagement.kick;
 import org.mcadminToolkit.playerslist.offlineplayerslist;
@@ -80,6 +77,7 @@ public class expressServer {
                         .add("/LOGS", new PostLogs())
                         .add("/LOGIN", new PostLogin())
                         .add("/CHANGEPASS", new PostChangePassword())
+                        .add("/REFRESHSESSION", new PostRefreshSession())
                 )
                 .build();
 
@@ -90,7 +88,7 @@ public class expressServer {
 }
 
 class ServerCommons {
-    static account checkSession (String authHeader) {
+    static account checkJWT (String authHeader) {
 
         account acc;
 
@@ -111,7 +109,11 @@ class ServerCommons {
         return acc;
     }
 
-    static String checkAccount (String authHeader) throws CreateAccountException, LoginDontExistException, WrongPasswordException, RequirePasswordChangeException {
+    static String checkSession (String refreshKeyHeader) throws InvalidSessionException, CreateSessionException, LoginDontExistException {
+        return sessionHandler.verifySession(expressServer.conGlobal, refreshKeyHeader);
+    }
+
+    static session checkAccount (String authHeader, String device, String model) throws CreateSessionException, LoginDontExistException, WrongPasswordException, RequirePasswordChangeException {
 
         String[] authSplit = authHeader.split(" ");
 
@@ -128,9 +130,7 @@ class ServerCommons {
         String login = credentials.substring(0, indexOfColon);
         String password = credentials.substring(indexOfColon + 1);
 
-        String generatedSessionKey = jwtHandler.generateToken(expressServer.conGlobal, login, password);
-
-        return generatedSessionKey;
+        return sessionHandler.createSession(expressServer.conGlobal, login, password, device, model);
     }
 
     static boolean changePass (String authHeader, String newPass) throws AccountException, OldPasswordDoesntMatch, LoginDontExistException {
@@ -180,7 +180,7 @@ class PostWhitelist implements HttpHandler {
 
                 String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
-                account acc = ServerCommons.checkSession(authHeader);
+                account acc = ServerCommons.checkJWT(authHeader);
 
 
                 if (acc == null) {
@@ -226,7 +226,7 @@ class PostPlayers implements HttpHandler {
             public void handle(HttpServerExchange exchange, byte[] message) {
                 String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
-                account acc = ServerCommons.checkSession(authHeader);
+                account acc = ServerCommons.checkJWT(authHeader);
 
                 if (acc == null) {
                     exchange.setStatusCode(401);
@@ -287,7 +287,7 @@ class PostBanlist implements HttpHandler {
             public void handle(HttpServerExchange exchange, byte[] message) {
                 String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
-                account acc = ServerCommons.checkSession(authHeader);
+                account acc = ServerCommons.checkJWT(authHeader);
 
                 if (acc == null) {
                     exchange.setStatusCode(401);
@@ -342,7 +342,7 @@ class PostBan implements HttpHandler {
 
                 String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
-                account acc = ServerCommons.checkSession(authHeader);
+                account acc = ServerCommons.checkJWT(authHeader);
 
                 if (acc == null) {
                     exchange.setStatusCode(401);
@@ -406,7 +406,7 @@ class PostBanIP implements HttpHandler {
 
                 String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
-                account acc = ServerCommons.checkSession(authHeader);
+                account acc = ServerCommons.checkJWT(authHeader);
 
                 if (acc == null) {
                     exchange.setStatusCode(401);
@@ -470,7 +470,7 @@ class PostUnban implements HttpHandler {
 
                 String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
-                account acc = ServerCommons.checkSession(authHeader);
+                account acc = ServerCommons.checkJWT(authHeader);
 
                 if (acc == null) {
                     exchange.setStatusCode(401);
@@ -533,7 +533,7 @@ class PostUnbanIP implements HttpHandler {
 
                 String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
-                account acc = ServerCommons.checkSession(authHeader);
+                account acc = ServerCommons.checkJWT(authHeader);
 
                 if (acc == null) {
                     exchange.setStatusCode(401);
@@ -598,7 +598,7 @@ class PostKick implements HttpHandler {
 
                 String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
-                account acc = ServerCommons.checkSession(authHeader);
+                account acc = ServerCommons.checkJWT(authHeader);
 
                 if (acc == null) {
                     exchange.setStatusCode(401);
@@ -654,7 +654,7 @@ class PostWhiteOn implements HttpHandler {
             public void handle(HttpServerExchange exchange, byte[] message) {
                 String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
-                account acc = ServerCommons.checkSession(authHeader);
+                account acc = ServerCommons.checkJWT(authHeader);
 
                 if (acc == null) {
                     exchange.setStatusCode(401);
@@ -712,7 +712,7 @@ class PostWhiteOff implements HttpHandler {
             public void handle(HttpServerExchange exchange, byte[] message) {
                 String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
-                account acc = ServerCommons.checkSession(authHeader);
+                account acc = ServerCommons.checkJWT(authHeader);
 
                 if (acc == null) {
                     exchange.setStatusCode(401);
@@ -777,7 +777,7 @@ class PostWhiteAdd implements HttpHandler {
 
                 String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
-                account acc = ServerCommons.checkSession(authHeader);
+                account acc = ServerCommons.checkJWT(authHeader);
 
                 if (acc == null) {
                     exchange.setStatusCode(401);
@@ -842,7 +842,7 @@ class PostWhiteRemove implements HttpHandler {
 
                 String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
-                account acc = ServerCommons.checkSession(authHeader);
+                account acc = ServerCommons.checkJWT(authHeader);
 
                 if (acc == null) {
                     exchange.setStatusCode(401);
@@ -900,7 +900,7 @@ class PostStats implements HttpHandler {
             public void handle(HttpServerExchange exchange, byte[] message) {
                 String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
-                account acc = ServerCommons.checkSession(authHeader);
+                account acc = ServerCommons.checkJWT(authHeader);
 
                 if (acc == null) {
                     exchange.setStatusCode(401);
@@ -953,7 +953,7 @@ class PostLogs implements HttpHandler {
             public void handle(HttpServerExchange exchange, byte[] message) {
                 String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
-                account acc = ServerCommons.checkSession(authHeader);
+                account acc = ServerCommons.checkJWT(authHeader);
 
                 if (acc == null) {
                     exchange.setStatusCode(401);
@@ -1000,11 +1000,21 @@ class PostLogin implements HttpHandler {
             public void handle(HttpServerExchange exchange, byte[] message) {
                 String authHeader = exchange.getRequestHeaders().getFirst("Authorization");
 
+                String body = new String(message);
+
+                JSONObject json = new JSONObject(body); // {"device": "Redmi", "model": "Note 11"}
+
+                String device = json.getString("device");
+                String model = json.getString("model");
+
                 String jwtToken = null;
+                String refreshKey = null;
 
                 try {
-                    jwtToken = ServerCommons.checkAccount(authHeader);
-                } catch (CreateAccountException e) {
+                    session newSession = ServerCommons.checkAccount(authHeader, device, model);
+                    jwtToken = newSession.jwtToken;
+                    refreshKey = newSession.refreshKey;
+                } catch (CreateSessionException e) {
                     exchange.setStatusCode(500);
                     exchange.getResponseSender().send("");
                     return;
@@ -1055,9 +1065,43 @@ class PostLogin implements HttpHandler {
                 obj.put ("icon", b64Img);
 
                 obj.put ("sessionKey", jwtToken);
+                obj.put ("refreshKey", refreshKey);
 
                 exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
                 exchange.getResponseSender().send(obj.toString());
+            }
+        });
+    }
+}
+
+class PostRefreshSession implements HttpHandler {
+    @Override
+    public void handleRequest(HttpServerExchange exchange) throws Exception {
+        exchange.getResponseHeaders().put(new HttpString("Access-Control-Allow-Origin"), "*");
+
+        HttpString method = exchange.getRequestMethod();
+
+        if (!method.equalToString("POST")) {
+            exchange.setStatusCode(405);
+            return;
+        }
+
+        exchange.getRequestReceiver().receiveFullBytes(new Receiver.FullBytesCallback() {
+            @Override
+            public void handle(HttpServerExchange exchange, byte[] message) {
+                String refreshKeyHeader = exchange.getRequestHeaders().getFirst("RefreshKey");
+
+                String jwtToken = null;
+
+                try {
+                    jwtToken = ServerCommons.checkSession(refreshKeyHeader);
+                } catch (CreateSessionException e) {
+                    exchange.setStatusCode(500);
+                    exchange.getResponseSender().send("");
+                } catch (LoginDontExistException | InvalidSessionException e) {
+                    exchange.setStatusCode(401);
+                    exchange.getResponseSender().send("");
+                }
             }
         });
     }
