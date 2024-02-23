@@ -42,7 +42,7 @@ public class sessionHandler {
         return new session(refreshKey, jwtToken);
     }
 
-    public static String verifySession (Connection con, String refreshKey) throws InvalidSessionException, CreateSessionException, LoginDontExistException {
+    public static String verifySession (Connection con, String refreshKey, String device, String model) throws InvalidSessionException, CreateSessionException, LoginDontExistException {
         PreparedStatement statement;
         int accountId;
         String login;
@@ -54,11 +54,15 @@ public class sessionHandler {
                     "FROM sessions " +
                     "WHERE " +
                         "CAST((JULIANDAY('now') - JULIANDAY(created_at)) AS INTEGER) < ? AND " +
-                        "refreshKey = ?");
+                        "refreshKey = ? AND " +
+                        "device = ? AND " +
+                        "model = ?");
 
             // todo make configurable session expiration days
             statement.setInt(1, 30);
             statement.setString(2, refreshKey);
+            statement.setString(3, device);
+            statement.setString(4, model);
 
             ResultSet resultSet = statement.executeQuery();
 

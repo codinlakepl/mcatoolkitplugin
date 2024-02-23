@@ -109,8 +109,8 @@ class ServerCommons {
         return acc;
     }
 
-    static String checkSession (String refreshKeyHeader) throws InvalidSessionException, CreateSessionException, LoginDontExistException {
-        return sessionHandler.verifySession(expressServer.conGlobal, refreshKeyHeader);
+    static String checkSession (String refreshKeyHeader, String device, String model) throws InvalidSessionException, CreateSessionException, LoginDontExistException {
+        return sessionHandler.verifySession(expressServer.conGlobal, refreshKeyHeader, device, model);
     }
 
     static session checkAccount (String authHeader, String device, String model) throws CreateSessionException, LoginDontExistException, WrongPasswordException, RequirePasswordChangeException {
@@ -1091,10 +1091,17 @@ class PostRefreshSession implements HttpHandler {
             public void handle(HttpServerExchange exchange, byte[] message) {
                 String refreshKeyHeader = exchange.getRequestHeaders().getFirst("RefreshKey");
 
+                String body = new String(message);
+
+                JSONObject json = new JSONObject(body); // {"device": "Redmi", "model": "Note 11"}
+
+                String device = json.getString("device");
+                String model = json.getString("model");
+
                 String jwtToken = null;
 
                 try {
-                    jwtToken = ServerCommons.checkSession(refreshKeyHeader);
+                    jwtToken = ServerCommons.checkSession(refreshKeyHeader, device, model);
                 } catch (CreateSessionException e) {
                     exchange.setStatusCode(500);
                     exchange.getResponseSender().send("");
