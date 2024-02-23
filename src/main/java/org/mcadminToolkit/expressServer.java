@@ -1109,6 +1109,12 @@ class PostRefreshSession implements HttpHandler {
                     exchange.setStatusCode(401);
                     exchange.getResponseSender().send("");
                 }
+
+                JSONObject obj = new JSONObject();
+                obj.put ("sessionKey", jwtToken);
+
+                exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
+                exchange.getResponseSender().send(obj.toString());
             }
         });
     }

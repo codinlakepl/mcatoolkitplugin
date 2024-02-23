@@ -49,14 +49,15 @@ public class sessionHandler {
 
         try {
             statement = con.prepareStatement("SELECT " +
-                        "accountId, " +
-                        "login " +
+                        "sessions.accountId, " +
+                        "accounts.login " +
                     "FROM sessions " +
+                    "INNER JOIN accounts ON accounts.id = sessions.accountId " +
                     "WHERE " +
-                        "CAST((JULIANDAY('now') - JULIANDAY(created_at)) AS INTEGER) < ? AND " +
-                        "refreshKey = ? AND " +
-                        "device = ? AND " +
-                        "model = ?");
+                        "CAST((JULIANDAY('now') - JULIANDAY(sessions.created_at)) AS INTEGER) < ? AND " +
+                        "sessions.refreshKey = ? AND " +
+                        "sessions.device = ? AND " +
+                        "sessions.model = ?");
 
             // todo make configurable session expiration days
             statement.setInt(1, 30);
