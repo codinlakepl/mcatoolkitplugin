@@ -58,13 +58,6 @@ public class accountHandler {
         }
     }
 
-    // changePass
-    // --- Connection con, String login, String oldPass, String newPass
-    // --- if old pass doesn't match, throw an exception
-    // --- if login didn't exist, throw an exception
-    // --- set new password
-    // --- change requireChange to true
-
     public static void changePass (Connection con, String login, String oldPass, String newPass) throws AccountException, LoginDontExistException, OldPasswordDoesntMatch {
         PreparedStatement statement;
 
@@ -99,20 +92,61 @@ public class accountHandler {
         }
     }
 
-    // resetPass
-    // --- Connection con, String login
-    // --- generate 6 character long password
-    // --- if login didn't exist, throw an exception
-    // --- set this password
-    // --- change requireChange to true
-    // updateAcc
-    // --- Connection con, String login, int secLvl
-    // --- if login didn't exist, throw an exception
-    // --- set new secLvl
-    // deleteAcc
-    // --- Connection con, String login
-    // --- if login didn't exist, throw an exception
-    // --- deleteAcc
+    public static void updateAcc (Connection con, String login, int secLvl) throws LoginDontExistException, AccountException {
+        PreparedStatement statement;
+
+        try {
+            statement = con.prepareStatement("SELECT * FROM accounts WHERE login = ?");
+            statement.setString(1, login);
+            ResultSet resultSet = statement.executeQuery();
+            if (!resultSet.next()) {
+                statement.close();
+
+                throw new LoginDontExistException();
+            }
+            resultSet.close();
+
+            statement.close();
+
+            statement = con.prepareStatement("UPDATE accounts SET secLvl = ? WHERE login = ?");
+
+            statement.setInt(1, secLvl);
+            statement.setString(2, login);
+
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            throw new AccountException(e.getMessage());
+        }
+    }
+
+    public static void resetPass (Connection con, String login) throws LoginDontExistException, AccountException {
+        PreparedStatement statement;
+
+        try {
+            statement = con.prepareStatement("SELECT * FROM accounts WHERE login = ?");
+            statement.setString(1, login);
+            ResultSet resultSet = statement.executeQuery();
+            if (!resultSet.next()) {
+                statement.close();
+
+                throw new LoginDontExistException();
+            }
+            resultSet.close();
+
+            statement.close();
+
+            statement = con.prepareStatement("UPDATE accounts SET password = ?, requireChange = 1 WHERE login = ?");
+
+            String hashedPass = BCrypt.hashpw(generatePassword (6), BCrypt.gensalt());
+
+            statement.setString(1, hashedPass);
+            statement.setString(2, login);
+
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            throw new AccountException(e.getMessage());
+        }
+    }
 
     public static void deleteAcc(Connection con, String login) throws LoginDontExistException, AccountException {
         PreparedStatement statement;
