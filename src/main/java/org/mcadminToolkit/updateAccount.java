@@ -1,4 +1,4 @@
-package org.mcadminToolkit.whitelist;
+package org.mcadminToolkit;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
