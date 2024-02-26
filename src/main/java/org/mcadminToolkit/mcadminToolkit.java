@@ -23,6 +23,9 @@ public final class mcadminToolkit extends JavaPlugin {
     public static JSONObject commandLogging;
     public static JSONObject appLogging;
 
+    public static int sessionLife;
+    public static int passLength;
+
     @Override
     public void onLoad () {
         getLogger().info("MCAdmin Toolkit Connector successfully loaded");

@@ -60,6 +60,7 @@ public class sessionHandler {
                         "sessions.model = ?");
 
             // todo make configurable session expiration days
+            // todo make refreshing session after login
             statement.setInt(1, 30);
             statement.setString(2, refreshKey);
             statement.setString(3, device);

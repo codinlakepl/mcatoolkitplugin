@@ -52,3 +52,9 @@ l: "Warsaw"
 st: "Mazowieckie"
 c: "PL"
 certBits: 4096
+
+# Days each session will live
+sessionLife: 30
+
+# Length of generated temp password
+passLength: 6
