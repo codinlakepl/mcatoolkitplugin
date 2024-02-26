@@ -119,7 +119,9 @@ public class accountHandler {
         }
     }
 
-    public static void resetPass (Connection con, String login) throws LoginDontExistException, AccountException {
+    public static String resetPass (Connection con, String login) throws LoginDontExistException, AccountException {
+        // todo make configurable length of generated pass
+
         PreparedStatement statement;
 
         try {
@@ -137,12 +139,16 @@ public class accountHandler {
 
             statement = con.prepareStatement("UPDATE accounts SET password = ?, requireChange = 1 WHERE login = ?");
 
-            String hashedPass = BCrypt.hashpw(generatePassword (6), BCrypt.gensalt());
+            String password = generatePassword (6);
+
+            String hashedPass = BCrypt.hashpw(password, BCrypt.gensalt());
 
             statement.setString(1, hashedPass);
             statement.setString(2, login);
 
             statement.executeUpdate();
+
+            return password;
         } catch (SQLException e) {
             throw new AccountException(e.getMessage());
         }

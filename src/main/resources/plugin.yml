@@ -9,6 +9,12 @@ commands:
   listAccounts:
     description: Lists created accounts
     usage: /<command>
-  removeAccounts:
+  removeAccount:
     description: Removes account with given login
+    usage: /<command> <login>
+  updateAccount:
+    description: Updates security level for account with given login
+    usage: /<command> <secLvl> <login>
+  resetPassword:
+    description: Resets password for account with given login
     usage: /<command> <login>
