@@ -13,13 +13,25 @@ import static org.mcadminToolkit.utils.passwordGenerator.generatePassword;
 
 public class accountHandler {
 
-    public static String createAcc (Connection con, String login, int secLvl) throws AccountException, TooLongLoginException, LoginExistsException {
-        // todo make limit on acceptable characters for login
+    final static String loginAllowedCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+
+    public static String createAcc (Connection con, String login, int secLvl) throws AccountException, TooLongLoginException, LoginExistsException, LoginContainsDisallowedCharacterException {
         // todo make configurable length of generated pass
         PreparedStatement statement;
 
         if (login.length() > 50) {
             throw new TooLongLoginException();
+        }
+
+        for (int i = 0; i < login.length(); i++) {
+            boolean doesNotContainDisallowedCharacters = false;
+            char character = login.charAt(i);
+
+            for (int j = 0; j < loginAllowedCharacters.length(); j++) {
+                if (loginAllowedCharacters.charAt(j) == character) doesNotContainDisallowedCharacters = true;
+            }
+
+            if (!doesNotContainDisallowedCharacters) throw new LoginContainsDisallowedCharacterException();
         }
 
         try {

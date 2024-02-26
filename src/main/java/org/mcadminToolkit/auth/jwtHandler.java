@@ -19,6 +19,7 @@ public class jwtHandler {
     static JWTVerifier verifier = null;
 
     public static void initializeJWT () {
+        // todo make secret regenerate every 24h
         String secret = passwordGenerator.generatePassword(20);
 
         algorithm = Algorithm.HMAC256(secret);

@@ -50,6 +50,9 @@ public class createAccount implements CommandExecutor {
         } catch (LoginExistsException e) {
             sender.sendMessage("Account with login " + login + " already exists");
             return false;
+        } catch (LoginContainsDisallowedCharacterException e) {
+            sender.sendMessage("Login contains disallowed characters");
+            return false;
         }
         return true;
     }
