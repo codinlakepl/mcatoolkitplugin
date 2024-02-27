@@ -358,12 +358,10 @@ class PostBan implements HttpHandler {
 
                 try {
                     ban.ban(expressServer.pluginGlobal, username, reason, Date.from(new Date().toInstant().plus(Duration.ofHours(hours))));
-
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send("Success");
+                    exchange.getResponseSender().send("");
                 } catch (Exception e) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send(e.getMessage());
+                    exchange.setStatusCode(500);
+                    exchange.getResponseSender().send("");
                 }
 
                 boolean log = mcadminToolkit.appLogging.getJSONObject("ban").getBoolean("log");
@@ -398,7 +396,7 @@ class PostBanIP implements HttpHandler {
             public void handle(HttpServerExchange exchange, byte[] message) {
                 String body = new String(message);
 
-                JSONObject json = new JSONObject(body); // {"ip": "127.0.0.1"}
+                JSONObject json = new JSONObject(body); // {"username": "IpyZ", "reason": "bo tak"}
 
                 // input json: username, sessionKey, reason
                 String playerName = json.getString("username");
@@ -423,12 +421,10 @@ class PostBanIP implements HttpHandler {
 
                 try {
                     ban.banIp(expressServer.pluginGlobal, playerName, reason);
-
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send("Success");
+                    exchange.getResponseSender().send("");
                 } catch (Exception e) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send(e.getMessage());
+                    exchange.setStatusCode(500);
+                    exchange.getResponseSender().send("");
                 }
 
                 boolean log = mcadminToolkit.appLogging.getJSONObject("banIp").getBoolean("log");
@@ -486,12 +482,10 @@ class PostUnban implements HttpHandler {
 
                 try {
                     ban.unban(expressServer.pluginGlobal, username);
-
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send("Success");
+                    exchange.getResponseSender().send("");
                 } catch (Exception e) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send(e.getMessage());
+                    exchange.setStatusCode(500);
+                    exchange.getResponseSender().send("");
                 }
 
                 boolean log = mcadminToolkit.appLogging.getJSONObject("unban").getBoolean("log");
@@ -549,12 +543,10 @@ class PostUnbanIP implements HttpHandler {
 
                 try {
                     ban.unbanIp(expressServer.pluginGlobal, ip);
-
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send("Success");
+                    exchange.getResponseSender().send("");
                 } catch (Exception e) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send(e.getMessage());
+                    exchange.setStatusCode(500);
+                    exchange.getResponseSender().send("");
                 }
 
                 boolean log = mcadminToolkit.appLogging.getJSONObject("unbanIp").getBoolean("log");
