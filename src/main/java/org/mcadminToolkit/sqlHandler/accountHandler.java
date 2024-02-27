@@ -1,5 +1,6 @@
 package org.mcadminToolkit.sqlHandler;
 
+import org.mcadminToolkit.mcadminToolkit;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 
 import java.sql.Connection;
@@ -16,7 +17,6 @@ public class accountHandler {
     final static String loginAllowedCharacters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
     public static String createAcc (Connection con, String login, int secLvl) throws AccountException, TooLongLoginException, LoginExistsException, LoginContainsDisallowedCharacterException {
-        // todo make configurable length of generated pass
         PreparedStatement statement;
 
         if (login.length() > 50) {
@@ -47,7 +47,7 @@ public class accountHandler {
 
             statement.close();
 
-            String password = generatePassword (6);
+            String password = generatePassword (mcadminToolkit.passLength);
             String hashedPass = BCrypt.hashpw(password, BCrypt.gensalt());
 
             statement = con.prepareStatement("INSERT INTO accounts (" +
@@ -132,7 +132,6 @@ public class accountHandler {
     }
 
     public static String resetPass (Connection con, String login) throws LoginDontExistException, AccountException {
-        // todo make configurable length of generated pass
 
         PreparedStatement statement;
 
@@ -151,7 +150,7 @@ public class accountHandler {
 
             statement = con.prepareStatement("UPDATE accounts SET password = ?, requireChange = 1 WHERE login = ?");
 
-            String password = generatePassword (6);
+            String password = generatePassword (mcadminToolkit.passLength);
 
             String hashedPass = BCrypt.hashpw(password, BCrypt.gensalt());
 

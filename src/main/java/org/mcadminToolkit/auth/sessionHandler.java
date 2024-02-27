@@ -1,5 +1,6 @@
 package org.mcadminToolkit.auth;
 
+import org.mcadminToolkit.mcadminToolkit;
 import org.mcadminToolkit.sqlHandler.AccountException;
 import org.mcadminToolkit.sqlHandler.LoginDontExistException;
 import org.mcadminToolkit.sqlHandler.RequirePasswordChangeException;
@@ -59,9 +60,8 @@ public class sessionHandler {
                         "sessions.device = ? AND " +
                         "sessions.model = ?");
 
-            // todo make configurable session expiration days
             // todo make refreshing session after login
-            statement.setInt(1, 30);
+            statement.setInt(1, mcadminToolkit.sessionLife);
             statement.setString(2, refreshKey);
             statement.setString(3, device);
             statement.setString(4, model);

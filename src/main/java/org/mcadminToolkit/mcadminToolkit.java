@@ -67,6 +67,9 @@ public final class mcadminToolkit extends JavaPlugin {
         Set<String> yamlCommandLoggingKeys = yamlCommandLogging.getKeys(false);
         Set<String> yamlAppLoggingKeys = yamlAppLogging.getKeys(false);
 
+        sessionLife = config.getInt("sessionLife");
+        passLength = config.getInt("passLength");
+
         appLogging = new JSONObject();
         commandLogging = new JSONObject();
 
