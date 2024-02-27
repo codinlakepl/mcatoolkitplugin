@@ -5,6 +5,7 @@ import org.mcadminToolkit.sqlHandler.AccountException;
 import org.mcadminToolkit.sqlHandler.LoginDontExistException;
 import org.mcadminToolkit.sqlHandler.RequirePasswordChangeException;
 import org.mcadminToolkit.sqlHandler.WrongPasswordException;
+import org.mcadminToolkit.utils.passwordGenerator;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -15,7 +16,7 @@ import java.util.UUID;
 public class sessionHandler {
     public static session createSession (Connection con, String login, String password, String device, String model) throws CreateSessionException, LoginDontExistException, RequirePasswordChangeException, WrongPasswordException {
         String jwtToken = jwtHandler.generateToken(con, login, password);
-        String refreshKey = UUID.randomUUID().toString();
+        String refreshKey = org.mcadminToolkit.utils.passwordGenerator.generatePassword(300, true, true, true, passwordGenerator.SpecialCharactersMode.CURATED);
 
         PreparedStatement statement;
 
@@ -55,12 +56,11 @@ public class sessionHandler {
                     "FROM sessions " +
                     "INNER JOIN accounts ON accounts.id = sessions.accountId " +
                     "WHERE " +
-                        "CAST((JULIANDAY('now') - JULIANDAY(sessions.created_at)) AS INTEGER) < ? AND " +
+                        "CAST((JULIANDAY('now') - JULIANDAY(sessions.last_used_at)) AS INTEGER) < ? AND " +
                         "sessions.refreshKey = ? AND " +
                         "sessions.device = ? AND " +
                         "sessions.model = ?");
-
-            // todo make refreshing session after login
+            
             statement.setInt(1, mcadminToolkit.sessionLife);
             statement.setString(2, refreshKey);
             statement.setString(3, device);
@@ -72,6 +72,14 @@ public class sessionHandler {
 
             accountId = resultSet.getInt(1);
             login = resultSet.getString(2);
+
+            resultSet.close();
+            statement.close();
+
+            statement = con.prepareStatement("UPDATE sessions SET last_used_at = CURRENT_TIMESTAMP WHERE refreshKey = ?");
+            statement.setString(1, refreshKey);
+
+            statement.executeUpdate();
         } catch (SQLException e) {
             throw new CreateSessionException(e.getMessage());
         }
