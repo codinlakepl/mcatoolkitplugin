@@ -362,6 +362,7 @@ class PostBan implements HttpHandler {
                 } catch (Exception e) {
                     exchange.setStatusCode(500);
                     exchange.getResponseSender().send("");
+                    expressServer.pluginGlobal.getLogger().info(e.getMessage());
                 }
 
                 boolean log = mcadminToolkit.appLogging.getJSONObject("ban").getBoolean("log");
@@ -425,6 +426,7 @@ class PostBanIP implements HttpHandler {
                 } catch (Exception e) {
                     exchange.setStatusCode(500);
                     exchange.getResponseSender().send("");
+                    expressServer.pluginGlobal.getLogger().info(e.getMessage());
                 }
 
                 boolean log = mcadminToolkit.appLogging.getJSONObject("banIp").getBoolean("log");
@@ -486,6 +488,7 @@ class PostUnban implements HttpHandler {
                 } catch (Exception e) {
                     exchange.setStatusCode(500);
                     exchange.getResponseSender().send("");
+                    expressServer.pluginGlobal.getLogger().info(e.getMessage());
                 }
 
                 boolean log = mcadminToolkit.appLogging.getJSONObject("unban").getBoolean("log");
@@ -547,6 +550,7 @@ class PostUnbanIP implements HttpHandler {
                 } catch (Exception e) {
                     exchange.setStatusCode(500);
                     exchange.getResponseSender().send("");
+                    expressServer.pluginGlobal.getLogger().info(e.getMessage());
                 }
 
                 boolean log = mcadminToolkit.appLogging.getJSONObject("unbanIp").getBoolean("log");
@@ -607,11 +611,11 @@ class PostKick implements HttpHandler {
                 try{
                     //ban.ban(expressServer.pluginGlobal, body, "TEST", Date.from(Instant.now()));
                     kick.kick(expressServer.pluginGlobal, username, reason);
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send("Success");
+                    exchange.getResponseSender().send("");
                 }catch (Exception e){
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send(e.getMessage());
+                    exchange.setStatusCode(500);
+                    exchange.getResponseSender().send("");
+                    expressServer.pluginGlobal.getLogger().info(e.getMessage());
                 }
 
                 boolean log = mcadminToolkit.appLogging.getJSONObject("kick").getBoolean("log");
@@ -664,12 +668,11 @@ class PostWhiteOn implements HttpHandler {
 
                 try {
                     output = whitelist.enableWhitelist(expressServer.pluginGlobal);
-
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send(output);
+                    exchange.getResponseSender().send("");
                 } catch (Exception e) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send(e.getMessage());
+                    exchange.setStatusCode(500);
+                    exchange.getResponseSender().send("");
+                    expressServer.pluginGlobal.getLogger().info(e.getMessage());
                 }
 
                 boolean log = mcadminToolkit.appLogging.getJSONObject("whitelistOnOff").getBoolean("log");
@@ -722,12 +725,11 @@ class PostWhiteOff implements HttpHandler {
 
                 try {
                     output = whitelist.disableWhitelist(expressServer.pluginGlobal);
-
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send(output);
+                    exchange.getResponseSender().send("");
                 } catch (Exception e) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send(e.getMessage());
+                    exchange.setStatusCode(500);
+                    exchange.getResponseSender().send("");
+                    expressServer.pluginGlobal.getLogger().info(e.getMessage());
                 }
 
                 boolean log = mcadminToolkit.appLogging.getJSONObject("whitelistOnOff").getBoolean("log");
@@ -787,12 +789,11 @@ class PostWhiteAdd implements HttpHandler {
 
                 try {
                     output = whitelist.addWhitelistPlayer(expressServer.pluginGlobal, username);
-
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send(output);
+                    exchange.getResponseSender().send("");
                 } catch (Exception e) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send(e.getMessage());
+                    exchange.setStatusCode(500);
+                    exchange.getResponseSender().send("");
+                    expressServer.pluginGlobal.getLogger().info(e.getMessage());
                 }
 
                 boolean log = mcadminToolkit.appLogging.getJSONObject("whitelistAddRemovePlayer").getBoolean("log");
@@ -852,12 +853,11 @@ class PostWhiteRemove implements HttpHandler {
 
                 try {
                     output = whitelist.removeWhitelistPlayer(expressServer.pluginGlobal, username);
-
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send(output);
+                    exchange.getResponseSender().send("");
                 } catch (Exception e) {
-                    exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
-                    exchange.getResponseSender().send(e.getMessage());
+                    exchange.setStatusCode(500);
+                    exchange.getResponseSender().send("");
+                    expressServer.pluginGlobal.getLogger().info(e.getMessage());
                 }
 
                 boolean log = mcadminToolkit.appLogging.getJSONObject("whitelistAddRemovePlayer").getBoolean("log");
